@@ -101,6 +101,32 @@ By installing AWS Security Analytics Bootstrap, AWS customers may incur charges 
 - [[Doc] Presto Documentation (current)](https://prestodb.io/docs/current/)
 - [[Book] Presto The Definitive Guide (e-book)](https://www.starburst.io/wp-content/uploads/2020/04/OReilly-Presto-The-Definitive-Guide.pdf)
 
+## Contributors
+AWS Security Analytics Bootstrap stands on the shoulders of countless giants and has benefited from the assistance of *MANY* collaborators and contributors.  Thanks to everyone who has helped or inspired the project so far and thanks in advance to any future contributions.
+
+Many thanks for your contributions:
+- Bohan Li
+- Brian Andrzejewski
+- Brian Poole
+- Casey Reniker
+- Clayton Darnell
+- Cydney Stude
+- Freddy Kasprzykowski
+- Jason Hurst
+- Jonathon Poling
+- Joshua McKiddy
+- Justin Fry
+- Kyle Dickenson
+- Luis Maldonado
+- Matt Gurr
+- Matt Helgen
+- Matthew Harvey
+- Pathik Shah
+- Ravi Sankar Prasad Kadiri
+- Richard Billington
+- Srinivas Ananda Babu
+- Theo Tolv
+
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
