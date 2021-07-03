@@ -1,0 +1,64 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Publish flow logs to S3 with a custom format containing all available fields'
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+    - Label:
+        default: 'Flow Logs Parameters'
+      Parameters:
+      - ParamResourceType
+      - ParamTargetResourceId
+      - ParamLogDestinationS3ARN
+      - ParamTrafficType
+      - ParamFlowlogsNameTag
+Parameters:
+  ParamResourceType:
+    Description: 'The type of resource for which to create the flow log. For example, if you specified a VPC ID for the ResourceId property, specify VPC for this property.'
+    Type: String
+    Default: VPC
+    AllowedValues:
+    - VPC
+    - Subnet
+    - NetworkInterface
+  ParamTargetResourceId:
+    Description: 'The ID of the VPC, subnet, or network interface for which you want to create a flow log'
+    Type: String
+    Default: vpc-xxxxxx
+  ParamLogDestinationS3ARN:
+    Description: 'ARN of the S3 Bucket and optional path where logs will be delivered'
+    Type: String
+    Default: 'arn:aws:s3:::bucketname/optional_prefix/'
+  ParamTrafficType:
+    Description: 'The type of traffic to log'
+    Type: String
+    Default: ALL
+    AllowedValues:
+    - ACCEPT
+    - REJECT
+    - ALL
+  ParamFlowlogsNameTag:
+    Description: 'The value of the "Name" tag attached to the flow logs'
+    Type: String
+    Default: flowlogs_allTraffic_allFields_v5_s3
+Resources:
+  ResourceFlowLog:
+    Type: AWS::EC2::FlowLog
+    Properties:
+      LogDestinationType: s3
+      LogDestination: !Ref ParamLogDestinationS3ARN
+      ResourceId: !Ref ParamTargetResourceId
+      ResourceType: !Ref ParamResourceType
+      TrafficType: !Ref ParamTrafficType
+      LogFormat: '${version} ${account-id} ${interface-id} ${srcaddr} ${dstaddr} ${srcport} ${dstport} ${protocol} ${packets} ${bytes} ${start} ${end} ${action} ${log-status} ${vpc-id} ${subnet-id} ${instance-id} ${tcp-flags} ${type} ${pkt-srcaddr} ${pkt-dstaddr} ${region} ${az-id} ${sublocation-type} ${sublocation-id} ${pkt-src-aws-service} ${pkt-dst-aws-service} ${flow-direction} ${traffic-path}'
+      MaxAggregationInterval: 60
+      Tags:
+        - Key: Name
+          Value: !Ref ParamFlowlogsNameTag
+Outputs:
+  OutputFlowLogId:
+    Value: !Ref ResourceFlowLog
+    Description: ID of the created flow log

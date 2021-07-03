@@ -1,0 +1,1132 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Create Athena Bootstrap Infrastructure Resources including default analyst Workgroup and CloudTrail, Flow Log, and DNS Resolver log Tables'
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+    - Label:
+        default: 'Athena Environment Parameters'
+      Parameters:
+      - ParamWorkgroupName
+      - ParamWorkgroupDescription
+      - ParamQueryOutputLocationName
+    - Label:
+        default: 'Glue Database Parameters'
+      Parameters:
+      - ParamDatabaseName
+    - Label:
+        default: 'Glue CloudTrail Table Parameters'
+      Parameters:
+      - ParamCloudTrailTableEnabled
+      - ParamCloudTrailTableName
+      - ParamCloudTrailSource
+      - ParamCloudTrailProjectionEventStartDate
+      - ParamCloudTrailAccountEnum
+      - ParamCloudTrailRegionEnum
+    - Label:
+        default: 'Glue VPC Flow Log Table Parameters'
+      Parameters:
+      - ParamVPCFlowTableEnabled
+      - ParamVPCFlowTableName
+      - ParamVPCFlowSource
+      - ParamVPCFlowProjectionEventStartDate
+      - ParamVPCFlowAccountEnum
+      - ParamVPCFlowRegionEnum
+    - Label:
+        default: 'Glue Route53 DNS Resolver Log Table Parameters'
+      Parameters:
+      - ParamDNSResolverTableEnabled
+      - ParamDNSResolverTableName
+      - ParamDNSResolverSource
+      - ParamDNSResolverProjectionEventStartDate
+      - ParamDNSResolverAccountEnum
+      - ParamDNSResolverVPCEnum
+Parameters:
+  
+  # Athena Environment Parameters
+  ParamWorkgroupName:
+    Description: 'Name of the initial Athena Security Analysis workgroup to create'
+    Type: String
+    Default: SecurityAnalysis
+  ParamWorkgroupDescription:
+    Description: 'Description of the initial Athena Security Analysis workgroup'
+    Type: String
+    Default: Security Analysis Athena Workgroup
+  ParamQueryOutputLocationName:
+    Description: 'S3 path to write all query results, store 45-day query history, and created tables via queries'
+    Type: String
+    Default: s3://query_history_bucket/optional_prefix/
+
+  # Glue Database Parameters
+  ParamDatabaseName:
+    Description: 'Name of the Glue database to create, which will contain all security analysis tables created by this template (**cannot contain hyphen**)'
+    Type: String
+    Default: security_analysis
+  
+  # CloudTrail Table Parameters
+  ParamCloudTrailTableEnabled:
+    Description: 'Do you want to create and enable a table for CloudTrail?'
+    Type: String
+    Default: 'YES'
+    AllowedValues:
+    - 'YES'
+    - 'NO'
+  ParamCloudTrailTableName:
+    Description: 'Name of the cloudtrail Glue table to create'
+    Type: String
+    Default: cloudtrail
+  ParamCloudTrailSource:
+    Description: "S3 base path of CloudTrail logs to be included in the CloudTrail table (must end with /AWSLogs/ or /AWSLogs/<your_org_id>/ if you're using an organization trail)"
+    Type: String
+    Default: s3://<bucket>/<prefix>/AWSLogs/
+  ParamCloudTrailProjectionEventStartDate:
+    Description: 'Start date for CloudTrail logs (replace <YYYY>/<MM>/<DD> with the first date of your logs, example: 2020/11/30)'
+    Type: String
+    Default: '<YYYY>/<MM>/<DD>'
+  ParamCloudTrailAccountEnum: 
+    Description: 'Account(s) to include in the CloudTrail log table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamVPCFlowSource}/AWSLogs/{account_number}/CloudTrail'
+    Type: String
+    Default: '<acount_num_1>,<account_num_2>,...'
+  ParamCloudTrailRegionEnum:
+    Description: 'Regions to include in the CloudTrail log table in a comma separated list with NO SPACES; Include all regions for full coverage even if there are no logs currently in that region'
+    Type: String
+    Default: us-east-2,us-east-1,us-west-1,us-west-2,af-south-1,ap-east-1,ap-south-1,ap-northeast-3,ap-northeast-2,ap-southeast-1,ap-southeast-2,ap-northeast-1,ca-central-1,cn-north-1,cn-northwest-1,eu-central-1,eu-west-1,eu-west-2,eu-south-1,eu-west-3,eu-north-1,me-south-1,sa-east-1
+  
+  # VPC Flow Log Table Parameters
+  ParamVPCFlowTableEnabled:
+    Description: 'Do you want to create and enable a table for VPC Flow Logs?'
+    Type: String
+    Default: 'YES'
+    AllowedValues:
+    - 'YES'
+    - 'NO'
+  ParamVPCFlowTableName: 
+    Description: 'Name of the VPC flow log Glue table to create'
+    Type: String
+    Default: vpcflow    
+  ParamVPCFlowSource:
+    Description: 'S3 base path of VPC flow logs to be included in the VPC flow table (must end with /AWSLogs/)'
+    Type: String
+    Default: s3://<bucket>/<prefix>/AWSLogs/   
+  ParamVPCFlowProjectionEventStartDate:
+    Description: 'Start date for VPC flow logs (replace <YYYY>/<MM>/<DD> with the first date of your logs, example: 2020/11/30)'
+    Type: String
+    Default: '<YYYY>/<MM>/<DD>'
+  ParamVPCFlowAccountEnum:
+    Description: 'Account(s) to include in the VPC flow log table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamVPCFlowSource}/AWSLogs/{account_number}/vpcflowlogs/'
+    Type: String
+    Default: '<acount_num_1>,<account_num_2>,...'
+  ParamVPCFlowRegionEnum:
+    Description: 'Regions to include in the VPC flow log table in a comma separated list with NO SPACES; Include all regions for full coverage even if there are no logs currently in that region'
+    Type: String
+    Default: us-east-2,us-east-1,us-west-1,us-west-2,af-south-1,ap-east-1,ap-south-1,ap-northeast-3,ap-northeast-2,ap-southeast-1,ap-southeast-2,ap-northeast-1,ca-central-1,cn-north-1,cn-northwest-1,eu-central-1,eu-west-1,eu-west-2,eu-south-1,eu-west-3,eu-north-1,me-south-1,sa-east-1
+  
+  # DNS Resolver Log Table Parameters
+  ParamDNSResolverTableEnabled:
+    Description: 'Do you want to create and enable a table for Route53 DNS Resolver Logs?'
+    Type: String
+    Default: 'YES'
+    AllowedValues:
+    - 'YES'
+    - 'NO'
+  ParamDNSResolverTableName:
+    Description: 'Name of the Route53 DNS Resolver log Glue table to create'
+    Type: String
+    Default: r53dns
+  ParamDNSResolverSource:
+    Description: 'S3 base path of Route53 DNS Resolver logs to be included in the Route53 DNS Resolver table (must end with /AWSLogs/)'
+    Type: String
+    Default: s3://<bucket>/<prefix>/AWSLogs/
+  ParamDNSResolverProjectionEventStartDate:
+    Description: 'Start date for Route53 DNS Resolver logs (replace <YYYY>/<MM>/<DD> with the first date of your logs, example: 2020/11/30)'
+    Type: String
+    Default: '<YYYY>/<MM>/<DD>'
+  ParamDNSResolverAccountEnum:
+    Description: 'Account(s) to include in the Route53 DNS Resolver log table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamVPCFlowSource}/AWSLogs/{account_number}/vpcdnsquerylogs/'
+    Type: String
+    Default: <acount_num_1>,<account_num_2>,...
+  ParamDNSResolverVPCEnum:
+    Description: 'VPC IDs to include in the Route53 DNS Resolver log table in a comma separated list with NO SPACES; Include all VPC IDs for full coverage even if there are no logs currently in that VPC'
+    Type: String
+    Default: <vpc_id_1>,<vpc_id_2>,...
+
+Conditions:
+  ConditionCreateCloudTrailTable: !Equals 
+    - !Ref ParamCloudTrailTableEnabled
+    - 'YES'
+  ConditionCreateVPCFlowTable: !Equals 
+    - !Ref ParamVPCFlowTableEnabled
+    - 'YES'
+  ConditionCreateDNSResolverTable: !Equals 
+    - !Ref ParamDNSResolverTableEnabled
+    - 'YES'
+
+Resources:
+  # Create an AWS Athena Workgroup
+  ResourceAthenaWorkgroupDefault:
+    Type: AWS::Athena::WorkGroup
+    Properties:
+      Description: !Ref ParamWorkgroupDescription
+      Name: !Ref ParamWorkgroupName
+      RecursiveDeleteOption: TRUE
+      State: ENABLED
+      WorkGroupConfiguration:
+        # EnforceWorkGroupConfiguration is True , Athena uses the workgroup-wide settings for query 
+        # results location and encryption. It also overrides any other settings that you specified 
+        # for the query in the console, by using the API operations, or with the drivers. 
+        # This affects you only if you run queries in this workgroup. If you do, workgroup settings are used
+        EnforceWorkGroupConfiguration: TRUE
+        EngineVersion: 
+            SelectedEngineVersion: 'Athena engine version 2'
+        PublishCloudWatchMetricsEnabled: FALSE
+        RequesterPaysEnabled: FALSE 
+        ResultConfiguration: 
+          OutputLocation: !Ref ParamQueryOutputLocationName
+          EncryptionConfiguration: 
+            EncryptionOption: SSE_S3
+  # Create an AWS Glue database
+  ResourceDatabaseASL:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: !Ref ParamDatabaseName  
+        Description: Database to hold tables for AWS Service logs logs
+  # Create an AWS Glue table
+  ResourceTableCloudTrail:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreateCloudTrailTable
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Ref ParamCloudTrailTableName
+        Description: Table for CloudTrail logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "json",
+          "EXTERNAL": "true",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamCloudTrailProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.region_partition.type": "enum",
+          "projection.region_partition.values": !Ref ParamCloudTrailRegionEnum,
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamCloudTrailAccountEnum,
+          "storage.location.template": !Join [ "", [ !Ref ParamCloudTrailSource,"${account_partition}/CloudTrail/${region_partition}/${date_partition}" ] ]
+  }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: region_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: eventversion
+            Type: string
+          - Name: useridentity
+            Type: struct<type:string,principalid:string,arn:string,accountid:string,invokedby:string,accesskeyid:string,userName:string,sessioncontext:struct<attributes:struct<mfaauthenticated:string,creationdate:string>,sessionissuer:struct<type:string,principalId:string,arn:string,accountId:string,userName:string>>>
+          - Name: eventtime
+            Type: string
+          - Name: eventsource
+            Type: string
+          - Name: eventname
+            Type: string
+          - Name: awsregion
+            Type: string
+          - Name: sourceipaddress
+            Type: string
+          - Name: useragent
+            Type: string
+          - Name: errorcode
+            Type: string
+          - Name: errormessage
+            Type: string
+          - Name: requestparameters
+            Type: string
+          - Name: responseelements
+            Type: string
+          - Name: additionaleventdata
+            Type: string
+          - Name: requestid
+            Type: string
+          - Name: eventid
+            Type: string
+          - Name: resources 
+            Type: array<struct<ARN:string,accountId:string,type:string>>
+          - Name: eventtype
+            Type: string
+          - Name: apiversion
+            Type: string
+          - Name: readonly
+            Type: string
+          - Name: recipientaccountid
+            Type: string
+          - Name: serviceeventdetails
+            Type: string
+          - Name: sharedeventid
+            Type: string
+          - Name: vpcendpointid
+            Type: string
+          InputFormat: com.amazon.emr.cloudtrail.CloudTrailInputFormat
+          Location: !Ref ParamCloudTrailSource
+          SerdeInfo:
+            Parameters:
+              serialization.format : "1"
+            SerializationLibrary: com.amazon.emr.hive.serde.CloudTrailSerde
+        
+# Create an AWS Glue table
+  ResourceTableVPCflow:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreateVPCFlowTable
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Ref ParamVPCFlowTableName
+        Description: Table for VPC flow logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamVPCFlowProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.region_partition.type": "enum",
+          "projection.region_partition.values": !Ref ParamVPCFlowRegionEnum,
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamVPCFlowAccountEnum,
+          "storage.location.template": !Join [ "", [!Ref ParamVPCFlowSource,"${account_partition}/vpcflowlogs/${region_partition}/${date_partition}"]]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: region_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: version
+            Type: int
+          - Name: account
+            Type: string
+          - Name: interfaceid
+            Type: string
+          - Name: sourceaddress
+            Type: string
+          - Name: destinationaddress
+            Type: string
+          - Name: sourceport
+            Type: int
+          - Name: destinationport
+            Type: int
+          - Name: protocol
+            Type: int
+          - Name: numpackets
+            Type: int
+          - Name: numbytes
+            Type: bigint
+          - Name: starttime
+            Type: int
+          - Name: endtime
+            Type: int
+          - Name: action
+            Type: string
+          - Name: logstatus
+            Type: string
+          - Name: vpcid
+            Type: string
+          - Name: subnetid
+            Type: string
+          - Name: instanceid
+            Type: string
+          - Name: tcpflags
+            Type: smallint
+          - Name: type
+            Type: string
+          - Name: pktsrcaddr
+            Type: string
+          - Name: pktdstaddr
+            Type: string
+          - Name: region
+            Type: string
+          - Name: azid
+            Type: string
+          - Name: sublocationtype
+            Type: string
+          - Name: sublocationid
+            Type: string
+          - Name: pkt_src_aws_service
+            Type: string
+          - Name: pkt_dst_aws_service
+            Type: string
+          - Name: flow_direction
+            Type: string
+          - Name: traffic_path
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Ref ParamVPCFlowSource
+          SerdeInfo:
+            Parameters:
+              serialization.format : ""
+              field.delim : " "
+            SerializationLibrary: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+
+# Create an AWS Glue table
+  ResourceTableDNSResolver:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreateDNSResolverTable
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Ref ParamDNSResolverTableName
+        Description: Table for DNS Resolver logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamDNSResolverProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.vpc_partition.type": "enum",
+          "projection.vpc_partition.values": !Ref ParamDNSResolverVPCEnum,
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamDNSResolverAccountEnum,
+          "storage.location.template": !Join [ "", [ !Ref ParamDNSResolverSource,"${account_partition}/vpcdnsquerylogs/${vpc_partition}/${date_partition}" ] ]
+  }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: vpc_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: version
+            Type: float
+          - Name: account_id
+            Type: string
+          - Name: region
+            Type: string
+          - Name: vpc_id
+            Type: string
+          - Name: query_timestamp
+            Type: string
+          - Name: query_name
+            Type: string
+          - Name: query_type
+            Type: string
+          - Name: query_class
+            Type: string
+          - Name: rcode
+            Type: string
+          - Name: answers
+            Type: array<string>
+          - Name: srcaddr
+            Type: string
+          - Name: srcport
+            Type: int
+          - Name: transport
+            Type: string
+          - Name: srcids
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Ref ParamDNSResolverSource
+          SerdeInfo:
+            Parameters:
+              serialization.format : "1"
+            SerializationLibrary: org.openx.data.jsonserde.JsonSerDe
+
+# Create Named Queries for Demo Queries
+# CloudTrail Demo Queries
+  ResourceDemoQueryCloudTrail1:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_CloudTrail_AllPartitions"
+      Description: "preview first 10 rows with all fields, limited by a combination partition constraints"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- preview first 10 rows with all fields, limited by a combination partition constraints
+        -- NOTE: narrowing the scope of the query as much as possible will improve performance and minimize cost
+        SELECT * from cloudtrail
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+        LIMIT 10;
+
+  ResourceDemoQueryCloudTrail2:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_CloudTrail_PartitionedByDateRange"
+      Description: "preview first 10 rows with all fields, limited to a certain date range"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- NOTE: date_partition format is 'YYYY/MM/DD' as a string
+        -- preview first 10 rows with all fields, limited to a certain date range
+        SELECT * from cloudtrail
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        LIMIT 10;
+  
+  ResourceDemoQueryCloudTrail3:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_CloudTrail_PartitionedByRelativeDate"
+      Description: "preview first 10 rows with all fields, limited to the past 30 days (relative)"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- preview first 10 rows with all fields, limited to the past 30 days (relative)
+        SELECT * from cloudtrail
+        WHERE date_partition >= date_format(date_add('day',-30,current_timestamp), '%Y/%m/%d')
+        LIMIT 10;
+
+  ResourceDemoQueryCloudTrail4:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_CloudTrail_EventCountByRegion"
+      Description: "Summary of event counts by Region (e.g. where is the most activity)"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Summary of event counts by Region (e.g. where is the most activity)
+        SELECT region_partition, count(*) as eventcount FROM cloudtrail
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+        GROUP BY region_partition
+        ORDER BY eventcount DESC
+
+  ResourceDemoQueryCloudTrail5:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_CloudTrail_EventCountByRegionAndEventname"
+      Description: "Summary of event count by Region and EventName, ordered by event count (descending) for each region"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Summary of event count by Region and EventName, ordered by event count (descending) for each region
+        --   Quick way to identify top EventNames seen in each region
+        SELECT region_partition, eventname, count(*) as eventcount FROM cloudtrail
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+        GROUP BY region_partition, eventname
+        ORDER BY region_partition, eventcount DESC
+  
+  ResourceDemoQueryCloudTrail6:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_CloudTrail_UserLoginSummary"
+      Description: "User login summary, via AssumeRole or ConsoleLogin"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- User login summary, via AssumeRole or ConsoleLogin
+        --   includes a list of all source IPs for each user
+        SELECT  useridentity.arn, eventname, array_agg(DISTINCT(sourceipaddress) ORDER BY sourceipaddress) AS sourceips FROM cloudtrail
+        WHERE useridentity.arn IS NOT NULL
+        AND (eventname = 'AssumeRole' OR eventname = 'ConsoleLogin')
+        AND date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+        GROUP BY useridentity.arn, eventname
+        ORDER BY eventname
+
+  ResourceDemoQueryCloudTrail7:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_CloudTrail_FilteredUserActivitySummary"
+      Description: "Filtered User Activity Summary"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- User Activity Summary
+        -- filter high volume read-only GET/LIST/DECRIBE calls
+        SELECT useridentity.arn, array_agg(DISTINCT(eventname)) AS eventnames,
+          array_agg(DISTINCT(sourceipaddress) ORDER BY sourceipaddress) AS sourceips,
+          array_agg(DISTINCT(useragent) ORDER BY useragent) AS useragents FROM cloudtrail
+        WHERE eventname <> 'AssumeRole'
+        AND eventname NOT LIKE 'Get%'
+        AND eventname NOT LIKE 'List%'
+        AND eventname NOT LIKE 'Describe%'
+        AND date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+        GROUP BY useridentity.arn
+
+  ResourceDemoQueryCloudTrail8:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_CloudTrail_FilteredUserActivitySummary2"
+      Description: "Filtered User Activity Summary With Username and PrincipalID"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- User Activity Summary, including username
+        -- filter high volume read-only GET/LIST/DECRIBE calls
+        -- same as above, but will include the ARN or the username (for IAM Users) of the principal 
+        SELECT useridentity.arn, useridentity.username,
+          array_agg(DISTINCT(eventname) ORDER BY eventname) AS eventnames,
+          array_agg(DISTINCT(sourceipaddress) ORDER BY sourceipaddress) AS sourceips,
+          array_agg(DISTINCT(useragent) ORDER BY useragent) AS useragents FROM cloudtrail
+        WHERE eventname <> 'AssumeRole'
+        AND eventname NOT LIKE 'Get%'
+        AND eventname NOT LIKE 'List%'
+        AND eventname NOT LIKE 'Describe%'
+        AND date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+        GROUP BY useridentity.arn, useridentity.principalid, useridentity.username
+  
+  ResourceDemoQueryCloudTrail9:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_CloudTrail_IAMChangeSummary"
+      Description: "IAM change summary"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- IAM change summary
+        -- * filter read-only GET/LIST/DESCRIBE
+        -- * filter unsuccessful calls
+        SELECT eventtime, useridentity.arn, useridentity.username, eventname, requestparameters 
+        FROM cloudtrail
+        WHERE eventsource = 'iam.amazonaws.com'
+        AND eventname NOT LIKE 'Get%'
+        AND eventname NOT LIKE 'List%'
+        AND eventname NOT LIKE 'Describe%'
+        AND errorcode IS NULL
+        AND date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+        ORDER BY account_partition, eventtime
+
+  ResourceDemoQueryCloudTrail10:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_CloudTrail_IAMAccessKeyCreations"
+      Description: "Access Key creations with extract of username and keyid"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Access Key creations with extract of username and keyid
+        -- * filter unsuccessful calls
+        SELECT eventtime, useridentity.arn, useridentity.username, eventname,
+          JSON_EXTRACT_SCALAR(JSON_EXTRACT(responseelements, '$.accessKey'), '$.userName') AS userName,
+          JSON_EXTRACT_SCALAR(JSON_EXTRACT(responseelements, '$.accessKey'), '$.accessKeyId') AS accessKey
+          FROM cloudtrail
+        WHERE eventname = 'CreateAccessKey'
+        AND errorcode IS NULL
+        AND date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+        ORDER BY account_partition, eventtime
+
+  ResourceDemoQueryCloudTrail11:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_CloudTrail_IAMPasswordChanges"
+      Description: "Password changes with extract of username"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Password changes with extract of username
+        -- * filter unsuccessful calls
+        SELECT eventtime, useridentity.arn, useridentity.username, eventname,
+          JSON_EXTRACT_SCALAR(requestparameters, '$.userName') AS "username with password modified"
+          FROM cloudtrail
+        WHERE eventname IN ('UpdateLoginProfile', 'CreateLoginProfile')
+        AND errorcode IS NULL
+        AND date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+        ORDER BY account_partition, eventtime   
+
+  ResourceDemoQueryCloudTrail12:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_CloudTrail_CTAS_SingleAccountRegion90Days"
+      Description: "Create optimized ORC columnar format table for a single account and region for the past 90 days"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Create optimized ORC columnar format table for a single account and region for the past 90 days
+        -- NOTE: single query limit is 100 partitions, to add additional accounts, regions, or days use the following INSERT INTO method
+        -- Reference: https://docs.aws.amazon.com/athena/latest/ug/ctas-insert-into.html
+        CREATE TABLE cloudtrail_orc
+        WITH (format = 'ORC', orc_compression = 'SNAPPY', partitioned_by = ARRAY['account_partition','region_partition','date_partition'] ) AS
+        SELECT eventversion,
+                useridentity,
+                eventtime,
+                eventsource,
+                eventname,
+                awsregion,
+                sourceipaddress,
+                useragent,
+                errorcode,
+                errormessage,
+                requestparameters,
+                responseelements,
+                additionaleventdata,
+                requestid,
+                eventid,
+                resources,
+                eventtype,
+                apiversion,
+                readonly,
+                recipientaccountid,
+                serviceeventdetails,
+                sharedeventid,
+                vpcendpointid,
+                account_partition,
+                region_partition,
+                date_partition
+        FROM cloudtrail
+        WHERE account_partition = '111122223333' 
+        AND region_partition = 'us-east-1'
+        AND date_partition >= date_format(date_add('day',-90,current_timestamp), '%Y/%m/%d')
+  ResourceDemoQueryCloudTrail13:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_CloudTrail_INSERT_INTO_SingleAccountRegion90Days"
+      Description: "Add optimized ORC columnar format table for a single account and region for the past 90 days"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Add optimized ORC columnar format table for a single account and region for the past 90 days
+        -- NOTE: single query limit is 100 partitions, to add additional accounts, regions, or days keep using this INSERT INTO method
+        -- Reference: https://docs.aws.amazon.com/athena/latest/ug/ctas-insert-into.html
+        INSERT INTO cloudtrail_orc
+        SELECT eventversion,
+                useridentity,
+                eventtime,
+                eventsource,
+                eventname,
+                awsregion,
+                sourceipaddress,
+                useragent,
+                errorcode,
+                errormessage,
+                requestparameters,
+                responseelements,
+                additionaleventdata,
+                requestid,
+                eventid,
+                resources,
+                eventtype,
+                apiversion,
+                readonly,
+                recipientaccountid,
+                serviceeventdetails,
+                sharedeventid,
+                vpcendpointid,
+                account_partition,
+                region_partition,
+                date_partition
+        FROM cloudtrail
+        WHERE account_partition = '111122223333' 
+        AND region_partition = 'us-east-2'
+        AND date_partition >= date_format(date_add('day',-90,current_timestamp), '%Y/%m/%d')   
+  ResourceDemoQueryCloudTrail14:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_CloudTrail_AllNonRFC1918SourceIPActivity"
+      Description: "Search for all events originating from a public (non-RCF1918) IP address"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Identify API events made from a public IP (i.e. a non-RFC1918 source IP address)
+        -- NOTE: this is an example of using the new IPADDRESS data type, as string a string comparison would correctly compare IP addresses
+        SELECT *
+        FROM cloudtrail
+        WHERE   regexp_like(sourceipaddress, '^\d')
+        AND NOT ( (CAST(sourceipaddress AS IPADDRESS) > IPADDRESS '10.0.0.0'
+        AND CAST(sourceipaddress AS IPADDRESS) < IPADDRESS '10.255.255.255')
+        OR (CAST(sourceipaddress AS IPADDRESS) > IPADDRESS '172.16.0.0'
+        AND CAST(sourceipaddress AS IPADDRESS) < IPADDRESS '172.31.255.255')
+        OR (CAST(sourceipaddress AS IPADDRESS) > IPADDRESS '192.168.0.0'
+        AND CAST(sourceipaddress AS IPADDRESS) < IPADDRESS '192.168.255.255'))
+        AND date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')   
+# VPCFlow Demo Queries
+  ResourceDemoQueryVPCFlow1:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_VPCFlow_AllPartitions"
+      Description: "preview first 10 rows with all fields, limited by a combination partition constraints"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- preview first 10 rows with all fields, limited by a combination partition constraints
+        -- NOTE: narrowing the scope of the query as much as possible will improve performance and minimize cost
+        SELECT * from vpcflow
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+        LIMIT 10;
+  ResourceDemoQueryVPCFlow2:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_VPCFlow_PartitionedByDateRange"
+      Description: "preview first 10 rows with all fields, limited to a certain date range"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- NOTE: date_partition format is 'YYYY/MM/DD' as a string
+        -- preview first 10 rows with all fields, limited to a certain date range
+        SELECT * from vpcflow
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        LIMIT 10;
+  ResourceDemoQueryVPCFlow3:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_VPCFlow_PartitionedByRelativeDate"
+      Description: "preview first 10 rows with all fields, limited to the past 30 days (relative)"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- preview first 10 rows with all fields, limited to the past 30 days (relative)
+        SELECT * from vpcflow
+        WHERE date_partition >= date_format(date_add('day',-30,current_timestamp), '%Y/%m/%d')
+        LIMIT 10;
+  ResourceDemoQueryVPCFlow4:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_VPCFlow_ListSrcDstIPPairRecordCounts"
+      Description: "Get list source/destination IP pairs ordered by the number of records "
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get list source/destination IP pairs ordered by the number of records 
+        SELECT region, instanceid, sourceaddress, destinationaddress, count(*) as record_count FROM vpcflow
+        WHERE date_partition >= '2020/07/01'
+        AND date_partition <= '2020/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+        GROUP BY region, instanceid, sourceaddress, destinationaddress
+        ORDER BY record_count DESC
+  ResourceDemoQueryVPCFlow5:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_VPCFlow_SrcDstIPPairSummary"
+      Description: "Get a summary of records between a given source/destination IP pair, ordered by the total number of bytes"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get a summary of records between a given source/destination IP pair, ordered by the total number of bytes
+        SELECT region, instanceid, sourceaddress, destinationaddress, sum(numbytes) as byte_count FROM vpcflow
+        WHERE (sourceaddress = '192.0.2.1' OR destinationaddress = '192.0.2.1')
+        AND (sourceaddress = '203.0.113.2' OR destinationaddress = '203.0.113.2')
+        AND date_partition >= '2020/07/01'
+        AND date_partition <= '2020/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+        GROUP BY region, instanceid, sourceaddress, destinationaddress
+        ORDER BY byte_count DESC
+  ResourceDemoQueryVPCFlow6:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_VPCFlow_InstanceSummaryFromPort"
+      Description: "Get a summary of the number of bytes sent from port 443 limited to a single instance"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get a summary of the number of bytes sent from port 443 limited to a single instance
+        -- NOTE: for remote IPs this represents the amount data downloaded from port 443 by the instance,
+        --       for instance IPs this represents the amount data downloaded by remote hosts from the instance on port 443
+        SELECT region, instanceid, sourceaddress, sourceport, destinationaddress, sum(numbytes) as byte_count FROM vpcflow
+        WHERE instanceid = 'i-000000000000000'
+        AND sourceport = 443
+        AND date_partition >= '2020/07/01'
+        AND date_partition <= '2020/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+        GROUP BY region, instanceid, sourceaddress, sourceport, destinationaddress
+        ORDER BY byte_count DESC
+  ResourceDemoQueryVPCFlow7:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_VPCFlow_InstanceSummaryToPort"
+      Description: "Get a summary of the number of bytes sent to port 443 limited to a single instance"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get a summary of the number of bytes sent to port 443 limited to a single instance
+        -- NOTE: for remote IPs this represents the amount data uploaded to port 443 by the instance,
+        --       for instance IPs this represents the amount data uploaded by remote hosts to the instance on port 443
+        SELECT region, instanceid, sourceaddress, destinationaddress, destinationport, sum(numbytes) as byte_count FROM vpcflow
+        WHERE instanceid = 'i-000000000000000'
+        AND destinationport = 443
+        AND date_partition >= '2020/07/01'
+        AND date_partition <= '2020/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+        GROUP BY region, instanceid, sourceaddress, destinationaddress, destinationport
+        ORDER BY byte_count DESC
+  ResourceDemoQueryVPCFlow8:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_VPCFlow_IpConnectionsSummary"
+      Description: "Get a summary with the number of bytes for each src_ip,src_port,dst_ip,dst_port quad across all records to or from a specific IP"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get a summary with the number of bytes for each src_ip,src_port,dst_ip,dst_port quad across all records to or from a specific IP
+        SELECT sourceaddress, destinationaddress, sourceport, destinationport, sum(numbytes) as byte_count FROM vpcflow
+        WHERE (sourceaddress = '192.0.2.1' OR destinationaddress = '192.0.2.1')
+        AND date_partition >= '2020/07/01'
+        AND date_partition <= '2020/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+        GROUP BY sourceaddress, destinationaddress, sourceport, destinationport
+        ORDER BY byte_count DESC    
+  ResourceDemoQueryVPCFlow9:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_VPCFlow_SrcDstIPPairDetailWithDirection"
+      Description: "Get a summary with the number of bytes for each src_ip,src_port,dst_ip,dst_port quad across all records to or from a specific IP"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get all flow records between two IPs showing flow_direction (requires v5 flow-direction field to be enabled)
+        SELECT from_unixtime(starttime) AS start_time,
+        from_unixtime(endtime) AS end_time,
+        interfaceid,
+        sourceaddress,
+        destinationaddress,
+        sourceport,
+        destinationport,
+        numpackets,
+        numbytes,
+        flow_direction,
+        action
+        FROM vpcflow
+        WHERE (sourceaddress = '192.0.2.1'
+        AND destinationaddress = '192.0.2.254')
+        OR (sourceaddress = '192.0.2.254'
+        AND destinationaddress = '192.0.2.1')
+        ORDER BY starttime ASC
+  ResourceDemoQueryVPCFlow10:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_VPCFlow_AllTrafficBetweenPublicAndPrivateIPs"
+      Description: "Search for traffic between a private (RFC1918) IP address and a public (non-RFC1918) IP address (exclude internal-to-internal traffic)"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Search for traffic between a private (RFC1918) IP address and a public (non-RFC1918) IP address
+        -- NOTE: this is an example of using the new IPADDRESS data type, as string a string comparison would correctly compare IP addresses
+        SELECT *
+        FROM vpcflow
+        WHERE (sourceaddress <> '-' AND destinationaddress <> '-')
+        AND (    (
+                NOT ( (CAST(sourceaddress AS IPADDRESS) > IPADDRESS '10.0.0.0'
+                AND CAST(sourceaddress AS IPADDRESS) < IPADDRESS '10.255.255.255')
+                OR (CAST(sourceaddress AS IPADDRESS) > IPADDRESS '172.16.0.0'
+                AND CAST(sourceaddress AS IPADDRESS) < IPADDRESS '172.31.255.255')
+                OR (CAST(sourceaddress AS IPADDRESS) > IPADDRESS '192.168.0.0'
+                AND CAST(sourceaddress AS IPADDRESS) < IPADDRESS '192.168.255.255'))
+            
+                AND ( (CAST(destinationaddress AS IPADDRESS) > IPADDRESS '10.0.0.0'
+                AND CAST(destinationaddress AS IPADDRESS) < IPADDRESS '10.255.255.255')
+                OR (CAST(destinationaddress AS IPADDRESS) > IPADDRESS '172.16.0.0'
+                AND CAST(destinationaddress AS IPADDRESS) < IPADDRESS '172.31.255.255')
+                OR (CAST(destinationaddress AS IPADDRESS) > IPADDRESS '192.168.0.0'
+                AND CAST(destinationaddress AS IPADDRESS) < IPADDRESS '192.168.255.255'))
+                )
+                
+              OR (
+                NOT ( (CAST(destinationaddress AS IPADDRESS) > IPADDRESS '10.0.0.0'
+                AND CAST(destinationaddress AS IPADDRESS) < IPADDRESS '10.255.255.255')
+                OR (CAST(destinationaddress AS IPADDRESS) > IPADDRESS '172.16.0.0'
+                AND CAST(destinationaddress AS IPADDRESS) < IPADDRESS '172.31.255.255')
+                OR (CAST(destinationaddress AS IPADDRESS) > IPADDRESS '192.168.0.0'
+                AND CAST(destinationaddress AS IPADDRESS) < IPADDRESS '192.168.255.255'))
+            
+                AND ( (CAST(sourceaddress AS IPADDRESS) > IPADDRESS '10.0.0.0'
+                AND CAST(sourceaddress AS IPADDRESS) < IPADDRESS '10.255.255.255')
+                OR (CAST(sourceaddress AS IPADDRESS) > IPADDRESS '172.16.0.0'
+                AND CAST(sourceaddress AS IPADDRESS) < IPADDRESS '172.31.255.255')
+                OR (CAST(sourceaddress AS IPADDRESS) > IPADDRESS '192.168.0.0'
+                AND CAST(sourceaddress AS IPADDRESS) < IPADDRESS '192.168.255.255'))
+                )
+            )
+        AND date_partition >= '2020/07/01'
+        AND date_partition <= '2020/07/31'
+        AND account_partition = '111122223333'
+        AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+
+# R53 DNS Resolver Demo Queries
+  ResourceDemoQueryR53DNS1:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_R53DNS_AllPartitions"
+      Description: "preview first 10 rows with all fields, limited by a combination partition constraints"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- preview first 10 rows with all fields, limited by a combination partition constraints
+        -- NOTE: narrowing the scope of the query as much as possible will improve performance and minimize cost
+        SELECT * from r53dns
+        WHERE date_partition >= '2020/07/01'
+        AND date_partition <= '2020/07/31'
+        AND account_partition = '111122223333'
+        AND vpc_partition in ('vpc-00000001','vpc-00000002','vpc-00000003')
+        LIMIT 10;
+  ResourceDemoQueryR53DNS2:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_R53DNS_PartitionedByDateRange"
+      Description: "preview first 10 rows with all fields, limited to a certain date range"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- NOTE: date_partition format is 'YYYY/MM/DD' as a string
+        -- preview first 10 rows with all fields, limited to a certain date range
+        SELECT * from r53dns
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        LIMIT 10;
+  ResourceDemoQueryR53DNS3:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_R53DNS_PartitionedByRelativeDate"
+      Description: "preview first 10 rows with all fields, limited to the past 30 days (relative)"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- preview first 10 rows with all fields, limited to the past 30 days (relative)
+        SELECT * from r53dns
+        WHERE date_partition >= date_format(date_add('day',-30,current_timestamp), '%Y/%m/%d')
+        LIMIT 10;
+  ResourceDemoQueryR53DNS4:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_R53DNS_QueriesByInstanceAndCount"
+      Description: "Sort queries by requester instance count and query count"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Sort queries by requester instance count and query count
+        SELECT  query_name, query_type, array_distinct(filter(array_agg(srcids), q -> q.instance IS NOT NULL)) as instances, 
+                cardinality(array_distinct(filter(array_agg(srcids), q -> q.instance IS NOT NULL))) as query_count 
+        FROM r53dns
+        WHERE date_partition >= '2020/07/01'
+        AND date_partition <= '2020/07/31'
+        AND account_partition = '111122223333'
+        AND vpc_partition in ('vpc-00000001','vpc-00000002','vpc-00000003')
+        GROUP BY query_name, query_type
+        ORDER by query_count DESC;
+  ResourceDemoQueryR53DNS5:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_R53DNS_QuerySummaryByCount"
+      Description: "Summary with count of each time a name name queried"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Summary with count of each time a name name queried
+        SELECT  query_name, query_type, count(*) as query_count FROM r53dns
+        WHERE date_partition >= '2020/07/01'
+        AND date_partition <= '2020/07/31'
+        AND account_partition = '111122223333'
+        AND vpc_partition in ('vpc-00000001','vpc-00000002','vpc-00000003')
+        GROUP BY query_name, query_type
+        ORDER BY query_count DESC;
+  ResourceDemoQueryR53DNS6:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_R53DNS_QuerySummaryAAAARecordsByCount"
+      Description: "Summary with count of each time a AAAA record name name queried"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Summary with count of each time a AAAA record name name queried
+        SELECT  query_name, query_type, count(*) as query_count FROM r53dns
+        WHERE query_type <> 'AAAA'
+        AND date_partition >= '2020/07/01'
+        AND date_partition <= '2020/07/31'
+        AND account_partition = '111122223333'
+        AND vpc_partition in ('vpc-00000001','vpc-00000002','vpc-00000003')
+        GROUP BY query_name, query_type
+        ORDER BY query_count DESC;
+  ResourceDemoQueryR53DNS7:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_R53DNS_QuerySummaryAAAARecordsByCountWithTLDAndSLD"
+      Description: "Summary with count of each time a AAAA record name name queried; split out TLD and SLD (note: doesn't properly handle TLDs containing a '.' (e.g. .com.br)"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Summary with count of each time a AAAA record name name queried
+        -- split out TLD and SLD (note: doesn't properly handle TLDs containing a '.' (e.g. .com.br)
+        SELECT element_at(split(query_name,'.'),-2) AS tld, 
+                element_at(split(query_name,'.'),-3) AS sld, 
+                query_name, query_type, 
+                count(*) AS query_count
+        FROM r53dns
+        WHERE query_type <> 'AAAA'
+        AND date_partition >= '2020/07/01'
+        AND date_partition <= '2020/07/31'
+        AND account_partition = '111122223333'
+        AND vpc_partition in ('vpc-00000001','vpc-00000002','vpc-00000003')
+        GROUP BY  query_name, query_type
+        ORDER BY  query_count DESC;
+  ResourceDemoQueryR53DNS8:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_R53DNS_RecordsResolvingToSpecificIP"
+      Description: "Get records that that resolve to a specific IP"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get records that that resolve to a specific IP
+        SELECT * FROM r53dns
+        WHERE contains(transform(answers, x-> x.rdata), '203.0.113.2')
+        AND date_partition >= '2020/07/01'
+        AND date_partition <= '2020/07/31'
+        AND account_partition = '111122223333'
+        AND vpc_partition in ('vpc-00000001','vpc-00000002','vpc-00000003');

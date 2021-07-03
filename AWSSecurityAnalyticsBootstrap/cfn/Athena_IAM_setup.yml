@@ -1,0 +1,339 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Athena IAM roles and policies initial setup
+Parameters: 
+  ParamLogSourceLocations:
+    Description: "Full path(s) for logs Athena will query in the form '<bucket_name>/<optional_prefix>/AWSLogs/' (comma seperated, no spaces between values)"
+    Type: String
+    Default: 'bucket_name/prefix/AWSLogs/,bucket_name2/prefix2/AWSLogs/'
+  ParamQueryOutputLocation:
+    Description: "Full path for Athena output in the form '<bucket_name>/<optional_prefix>/'"
+    Type: String
+    Default: 'query_history_bucket/optional_prefix/'
+  ParamAllBucketNames:
+    Type: String
+    Description: 'The name of all buckets, including log buckets and Athena output bucket (comma seperated, no spaces between values)'
+    Default: 'log_bucket_1,log_bucket_2,output_bucket'
+Resources:
+  ResourceAthenaSecurityAnalystRole:
+    Type: AWS::IAM::Role
+    Metadata: 
+      Comment: "TODO: Update the Assume Role Policy Document according to your organization's policies (e.g. from org, from account, using SSO or identity federation, etc.)"
+    DeletionPolicy: Delete
+    Properties:
+      RoleName: AthenaSecurityAnalystRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        # TODO: Replace this with the approriate least-privilege AssumeRole policy for your organization
+        # Reference: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_permissions-to-switch.html#roles-usingrole-createpolicy
+          - Effect: Deny
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'sts:AssumeRole'
+      Path: /
+  ResourceAthenaSecurityAdminRole:
+    Type: AWS::IAM::Role
+    Metadata: 
+      Comment: "TODO: Update the Assume Role Policy Document according to your organization's policies (e.g. from org, from account, using SSO or identity federation, etc.)"
+    DeletionPolicy: Delete
+    Properties:
+      RoleName: AthenaSecurityAdminRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        # TODO: Replace this with the approriate least-privilege AssumeRole policy for your organization
+        # Reference: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_permissions-to-switch.html#roles-usingrole-createpolicy
+          - Effect: Deny
+            Principal: 
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'sts:AssumeRole'
+      Path: /
+  ResourceAthenaSecurityAnalystPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AthenaSecurityAnalystPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: SecurityNamedQueryFullAccess
+          Effect: Allow
+          Action:
+          - athena:BatchGetNamedQuery
+          - athena:CreateNamedQuery
+          - athena:DeleteNamedQuery
+          - athena:GetNamedQuery
+          - athena:ListNamedQueries
+          Resource:
+          # Note: The first '*' in each resource below is to allow the actions above for Athena Workgroup resources in all regions, if only one region will be used you may specify the specific region or use ${AWS::Region} to specify the current region
+          #       The second '*' in each resource below is to allow the actions above for Athena Workgroup resources which start with 'Security' or 'security_' as a standard naming scheme, which allows flexibility if you want to use multiple workgroups.
+          #       If you only plan to use a single workgroup, you may specify the name here and replace 'Security*' or 'security_' with the explicit name(s) of the workgroups you plan to use.  
+          - !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/Security*'
+          - !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/security_*'
+        - Sid: SecurityWorkgroupReadOnly
+          Effect: Allow
+          Action:
+          - athena:GetWorkGroup
+          - athena:ListWorkGroups
+          - athena:BatchGetQueryExecution
+          - athena:GetQueryExecution
+          - athena:GetQueryResults
+          - athena:GetQueryResultsStream
+          - athena:ListQueryExecutions
+          - athena:ListTagsForResource
+          - athena:StartQueryExecution
+          - athena:StopQueryExecution
+          Resource:
+          # Note: The first '*' in each resource below is to allow the actions above for Athena Workgroup resources in all regions, if only one region will be used you may specify the specific region or use ${AWS::Region} to specify the current region
+          #       The second '*' in each resource below is to allow the actions above for Athena Workgroup resources which start with 'Security' or 'security_' as a standard naming scheme, which allows flexibility if you want to use multiple workgroups.
+          #       If you only plan to use a single workgroup, you may specify the name here and replace 'Security*' or 'security_' with the explicit name(s) of the workgroups you plan to use.  
+          - !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/Security*'
+          - !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/security_*'
+        - Sid: SecurityAthenaDataCatalogReadOnly
+          Effect: Allow
+          Action:
+          - athena:GetDataCatalog
+          - athena:ListDataCatalogs
+          - athena:GetDatabase
+          - athena:ListDatabases
+          - athena:GetTableMetadata
+          - athena:ListTableMetadata
+          Resource:
+          # Note: The first '*' in each resource below is to allow the actions above for Athena Data Catalog resources in all regions, if only one region will be used you may specify the specific region or use ${AWS::Region} to specify the current region
+          #       The second '*' in each resource below is to allow the actions above for all Athena Data Catalog resources which start with 'Security' or 'security_' as a standard naming scheme, which allows flexibility if you want to use multiple data catalogs.
+          #       If you only plan to use a single data catalog, you may specify the name here and replace 'Security*' or 'security_' with the explicit name(s) of the data catalog you plan to use.  
+          - !Sub 'arn:aws:athena:*:${AWS::AccountId}:datacatalog/Security*'
+          - !Sub 'arn:aws:athena:*:${AWS::AccountId}:datacatalog/security_*'  
+        - Sid: SecurityGlueDatabaseReadOnly
+          Effect: Allow
+          Action:
+          - glue:GetDatabase
+          - glue:GetDatabases
+          Resource:
+          # Note: The first '*' in each resource below is to allow the actions above for Glue Database resources in all regions, if only one region will be used you may specify the specific region or use ${AWS::Region} to specify the current region
+          #       The second '*' in each resource below is to allow the actions above for all Glue Database resources which start with 'Security' or 'security_' as a standard naming scheme, which allows flexibility if you want to use multiple databases.
+          #       If you only plan to use a single database, you may specify the name here and replace 'Security*' or 'security_' with the explicit name(s) of the database you plan to use.  
+          - !Sub 'arn:aws:glue:*:${AWS::AccountId}:database/Security*'
+          - !Sub 'arn:aws:glue:*:${AWS::AccountId}:database/security_*'
+        - Sid: SecurityGlueTableReadOnly
+          Effect: Allow
+          Action:
+          - glue:GetTable
+          - glue:GetTables
+          Resource:
+          # Note: The first '*' in each resource below is to allow the actions above for Glue Table resources in all regions, if only one region will be used you may specify the specific region or use ${AWS::Region} to specify the current region
+          #       The second '*' in each resource below is to allow the actions above for all Glue Table resources are associated with a Glue Database that starts with 'Security' or 'security_' as a standard naming scheme, which allows flexibility if you want to use multiple databases.
+          #       Note that Glue Table ARNs are in the format arn:aws:glue:region:account-id:table/database name/table name, so this will allow any table naming scheme as long as it is associated with a Glue Database staringing with 'Security' or 'security_'.
+          #       If you only plan to use a single database, you may specify the name here and replace 'Security*' or 'security_' with the explicit name(s) of the database you plan to use.
+          #       You may also specify the full Database/Table name explicitly in the ARN if you know would like to limit the actions to only those tables explicitly.
+          - !Sub 'arn:aws:glue:*:${AWS::AccountId}:table/Security*'
+          - !Sub 'arn:aws:glue:*:${AWS::AccountId}:table/security_*'
+        - Sid: SecurityGluePartitionReadOnly
+          Effect: Allow
+          Action:
+          - glue:BatchGetPartition
+          - glue:GetPartition
+          - glue:GetPartitions
+          Resource:
+          # Note: The first '*' in each resource below is to allow the actions above for Glue Database resources in all regions, if only one region will be used you may specify the specific region or use ${AWS::Region} to specify the current region
+          #       The second '*' in each resource below is to allow the actions above for all Glue Database resources which start with 'Security' or 'security_' as a standard naming scheme, which allows flexibility if you want to use multiple databases.
+          #       If you only plan to use a single database, you may specify the name here and replace 'Security*' or 'security_' with the explicit name(s) of the database you plan to use.  
+          - !Sub 'arn:aws:glue:*:${AWS::AccountId}:database/Security*'
+          - !Sub 'arn:aws:glue:*:${AWS::AccountId}:database/security_*'
+        - Sid: AthenaOutputBucketReadWrite
+          Effect: Allow
+          Action:
+          - s3:AbortMultipartUpload
+          - s3:GetBucketLocation
+          - s3:GetObject
+          - s3:ListBucket
+          - s3:ListBucketMultipartUploads
+          - s3:ListMultipartUploadParts
+          - s3:PutObject
+          Resource:
+          # Note: The '*' in each resource below is to allow the actions above on all S3 Objects in the specified S3 Bucket.  If you'd like to limit it to a specific path you could for example specify '/athena/*'
+          - !Join [ '', ['arn:aws:s3:::', !Ref ParamQueryOutputLocation, '*']]
+        - Sid: LogSourceBucketReadOnly
+          Effect: Allow
+          Action:
+          - s3:GetObject
+          - s3:ListBucket
+          # Note: The '*' in each resources below is to allow the actions above on all S3 Objects in the specified S3 Buckets.  If you'd like to limit it to a specific path you could for example specify '/AWSLogs/*'
+          Resource:  !Split ["," , !Join [ "*,arn:aws:s3:::" , !Split [",", !Join [ '', ['arn:aws:s3:::', !Ref ParamLogSourceLocations, '*']]]]]
+        - Sid: ListLogAndOutputBuckets
+          Effect: Allow
+          Action:
+          - s3:GetBucketLocation
+          - s3:ListBucket
+          Resource:  !Split ["," , !Join [ ",arn:aws:s3:::" , !Split [",", !Join [ '', ['arn:aws:s3:::', !Ref ParamAllBucketNames]]]]]
+      Roles:
+        - !Ref ResourceAthenaSecurityAnalystRole
+  ResourceAthenaSecurityAdminPolicy:
+    Type: AWS::IAM::Policy
+    Properties: 
+      PolicyName: AthenaSecurityAdminPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: SecurityNamedQueryFullAccess
+          Effect: Allow
+          Action:
+          - athena:BatchGetNamedQuery
+          - athena:CreateNamedQuery
+          - athena:DeleteNamedQuery
+          - athena:GetNamedQuery
+          - athena:ListNamedQueries
+          Resource:
+          # Note: The first '*' in each resource below is to allow the actions above for Athena Workgroup resources in all regions, if only one region will be used you may specify the specific region or use ${AWS::Region} to specify the current region
+          #       The second '*' in each resource below is to allow the actions above for Athena Workgroup resources which start with 'Security' or 'security_' as a standard naming scheme, which allows flexibility if you want to use multiple workgroups.
+          #       If you only plan to use a single workgroup, you may specify the name here and replace 'Security*' or 'security_' with the explicit name(s) of the workgroups you plan to use.  
+          - !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/Security*'
+          - !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/security_*'
+        - Sid: SecurityWorkgroupFullAccess
+          Effect: Allow
+          Action:
+          - athena:CreateWorkGroup
+          - athena:DeleteWorkGroup
+          - athena:GetWorkGroup
+          - athena:ListWorkGroups
+          - athena:UpdateWorkGroup
+          - athena:BatchGetQueryExecution
+          - athena:GetQueryExecution
+          - athena:GetQueryResults
+          - athena:GetQueryResultsStream
+          - athena:ListQueryExecutions
+          - athena:ListTagsForResource
+          - athena:StartQueryExecution
+          - athena:StopQueryExecution
+          Resource:
+          # Note: The first '*' in each resource below is to allow the actions above for Athena Workgroup resources in all regions, if only one region will be used you may specify the specific region or use ${AWS::Region} to specify the current region
+          #       The second '*' in each resource below is to allow the actions above for Athena Workgroup resources which start with 'Security' or 'security_' as a standard naming scheme, which allows flexibility if you want to use multiple workgroups.
+          #       If you only plan to use a single workgroup, you may specify the name here and replace 'Security*' or 'security_' with the explicit name(s) of the workgroups you plan to use.  
+          - !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/Security*'
+          - !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/security_*'
+        - Sid: SecurityAthenaDataCatalogFullAccess
+          Effect: Allow
+          Action:
+          - athena:CreateDataCatalog
+          - athena:DeleteDataCatalog
+          - athena:GetDataCatalog
+          - athena:ListDataCatalogs
+          - athena:UpdateDataCatalog
+          - athena:GetDatabase
+          - athena:ListDatabases
+          - athena:GetTableMetadata
+          - athena:ListTableMetadata
+          Resource:
+          # Note: The first '*' in each resource below is to allow the actions above for Athena Data Catalog resources in all regions, if only one region will be used you may specify the specific region or use ${AWS::Region} to specify the current region
+          #       The second '*' in each resource below is to allow the actions above for all Athena Data Catalog resources which start with 'Security' or 'security_' as a standard naming scheme, which allows flexibility if you want to use multiple data catalogs.
+          #       If you only plan to use a single data catalog, you may specify the name here and replace 'Security*' or 'security_' with the explicit name(s) of the data catalog you plan to use.  
+          - !Sub 'arn:aws:athena:*:${AWS::AccountId}:datacatalog/Security*'
+          - !Sub 'arn:aws:athena:*:${AWS::AccountId}:datacatalog/security_*'  
+        - Sid: SecurityGlueDatabaseFullAccess
+          Effect: Allow
+          Action:
+          - glue:CreateDatabase
+          - glue:DeleteDatabase
+          - glue:GetDatabase
+          - glue:GetDatabases
+          - glue:UpdateDatabase
+          Resource:
+          # Note: The first '*' in each resource below is to allow the actions above for Glue Database resources in all regions, if only one region will be used you may specify the specific region or use ${AWS::Region} to specify the current region
+          #       The second '*' in each resource below is to allow the actions above for all Glue Database resources which start with 'Security' or 'security_' as a standard naming scheme, which allows flexibility if you want to use multiple databases.
+          #       If you only plan to use a single database, you may specify the name here and replace 'Security*' or 'security_' with the explicit name(s) of the database you plan to use.  
+          - !Sub 'arn:aws:glue:*:${AWS::AccountId}:database/Security*'
+          - !Sub 'arn:aws:glue:*:${AWS::AccountId}:database/security_*'
+        - Sid: SecurityGlueTableFullAccess
+          Effect: Allow
+          Action:
+          - glue:BatchDeleteTable
+          - glue:CreateTable
+          - glue:DeleteTable
+          - glue:GetTable
+          - glue:GetTables
+          - glue:UpdateTable
+          Resource:
+          # Note: The first '*' in each resource below is to allow the actions above for Glue Table resources in all regions, if only one region will be used you may specify the specific region or use ${AWS::Region} to specify the current region
+          #       The second '*' in each resource below is to allow the actions above for all Glue Table resources are associated with a Glue Database that starts with 'Security' or 'security_' as a standard naming scheme, which allows flexibility if you want to use multiple databases.
+          #       Note that Glue Table ARNs are in the format arn:aws:glue:region:account-id:table/database name/table name, so this will allow any table naming scheme as long as it is associated with a Glue Database staringing with 'Security' or 'security_'.
+          #       If you only plan to use a single database, you may specify the name here and replace 'Security*' or 'security_' with the explicit name(s) of the database you plan to use.
+          #       You may also specify the full Database/Table name explicitly in the ARN if you know would like to limit the actions to only those tables explicitly.
+          - !Sub 'arn:aws:glue:*:${AWS::AccountId}:table/Security*'
+          - !Sub 'arn:aws:glue:*:${AWS::AccountId}:table/security_*'
+        - Sid: SecurityGluePartitionReadWrite
+          Effect: Allow
+          Action:
+          - glue:BatchCreatePartition
+          - glue:BatchDeletePartition
+          - glue:BatchGetPartition
+          - glue:CreatePartition
+          - glue:DeletePartition
+          - glue:GetPartition
+          - glue:GetPartitions
+          - glue:UpdatePartition
+          Resource:
+          # Note: The first '*' in each resource below is to allow the actions above for Glue Database resources in all regions, if only one region will be used you may specify the specific region or use ${AWS::Region} to specify the current region
+          #       The second '*' in each resource below is to allow the actions above for all Glue Database resources which start with 'Security' or 'security_' as a standard naming scheme, which allows flexibility if you want to use multiple databases.
+          #       If you only plan to use a single database, you may specify the name here and replace 'Security*' or 'security_' with the explicit name(s) of the database you plan to use.  
+          - !Sub 'arn:aws:glue:*:${AWS::AccountId}:database/Security*'
+          - !Sub 'arn:aws:glue:*:${AWS::AccountId}:database/security_*'
+        - Sid: SecurityAthenaTagResources
+          Effect: Allow
+          Action:
+          - athena:TagResource
+          - athena:UntagResource
+          Resource:
+          # Note: The first '*' in each resource below is to allow the actions above for Athena Workgroup resources in all regions, if only one region will be used you may specify the specific region or use ${AWS::Region} to specify the current region
+          #       The second '*' in each resource below is to allow the actions above for Athena Workgroup resources which start with 'Security' or 'security_' as a standard naming scheme, which allows flexibility if you want to use multiple workgroups.
+          #       If you only plan to use a single workgroup, you may specify the name here and replace 'Security*' or 'security_' with the explicit name(s) of the workgroups you plan to use.  
+          - !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/Security*'
+          - !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/security_*'
+          # Note: The first '*' in each resource below is to allow the actions above for Athena Data Catalog resources in all regions, if only one region will be used you may specify the specific region or use ${AWS::Region} to specify the current region
+          #       The second '*' in each resource below is to allow the actions above for all Athena Data Catalog resources which start with 'Security' or 'security_' as a standard naming scheme, which allows flexibility if you want to use multiple data catalogs.
+          #       If you only plan to use a single data catalog, you may specify the name here and replace 'Security*' or 'security_' with the explicit name(s) of the data catalog you plan to use.  
+          - !Sub 'arn:aws:athena:*:${AWS::AccountId}:datacatalog/Security*'
+          - !Sub 'arn:aws:athena:*:${AWS::AccountId}:datacatalog/security_*'
+        - Sid: AthenaOutputBucketReadWrite
+          Effect: Allow
+          Action:
+          - s3:AbortMultipartUpload
+          - s3:GetBucketLocation
+          - s3:GetObject
+          - s3:ListBucket
+          - s3:ListBucketMultipartUploads
+          - s3:ListMultipartUploadParts
+          - s3:PutObject
+          Resource:
+          # Note: The '*' in each resource below is to allow the actions above on all S3 Objects in the specified S3 Bucket.  If you'd like to limit it to a specific path you could for example specify '/athena/*'
+          - !Join [ '', ['arn:aws:s3:::', !Ref ParamQueryOutputLocation, '*']]
+        - Sid: LogSourceBucketReadOnly
+          Effect: Allow
+          Action:
+          - s3:GetObject
+          - s3:ListBucket
+          # Note: The '*' in each resources below is to allow the actions above on all S3 Objects in the specified S3 Buckets.  If you'd like to limit it to a specific path you could for example specify '/AWSLogs/*'
+          Resource: !Split ["," , !Join [ "*,arn:aws:s3:::" , !Split [",", !Join [ '', ['arn:aws:s3:::', !Ref ParamLogSourceLocations, '*']]]]]
+        - Sid: ListAllBuckets
+          Effect: Allow
+          Action:
+          - s3:GetBucketLocation
+          - s3:ListBucket
+          - s3:ListAllMyBuckets
+          Resource:
+          # Note: The '*' in each resource below is to allow the actions above on all S3 Buckets in your account.  
+          #       If you know all of the buckets you plan to use with Athena you may specify them explicitly here instead (e.g. arn:aws:s3:::BucketName)
+          - 'arn:aws:s3:::*'
+      Roles:
+        - !Ref ResourceAthenaSecurityAdminRole
+Outputs:
+  OutputAthenaSecurityAnalystRoleArn:
+    Value: !GetAtt ResourceAthenaSecurityAnalystRole.Arn
+    Description: Athena Analyst Role ARN
+  OutputAthenaSecurityAdminRoleArn:
+    Value: !GetAtt ResourceAthenaSecurityAdminRole.Arn
+    Description: Athena Admin Role ARN
+
