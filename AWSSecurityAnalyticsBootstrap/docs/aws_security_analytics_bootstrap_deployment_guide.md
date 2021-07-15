@@ -129,14 +129,14 @@ The Athena Workgroup will determine where/how Athena output results are stored, 
 - With the Athena Workgroup selected click `Switch workgroup`, this will set this workgroup as the active workgroup.  Note that Athena may ask for  acknowledgment to confirm the user's query output is being logged to the specified S3 location.
 
 ### 5.2 Setting the Glue Database
-The Glue Database will determine what Glue tables are visible, and will be the default database for all queries which don't explicitly specify a database name.  For this reason it's recommended to ensure that users ensure that have selected the appropriate database prior to running queries.  This may need to be reset periodically if the user navigates away from the `Query editor` view.
+The Glue Database will determine what Glue tables are visible, and will be the default database for all queries which don't explicitly specify a database name.  For this reason, it is recommended that users validate that the appropriate database has been selected prior to running queries.  This may need to be reset periodically if the user navigates away from the `Query editor` view.
 
 - In the `Athena` Service Console Click on `Query editor` (in the top bar)
 - On the left sidebar select the database from the drop down menu (`security_analysis` by default or as specified in the CloudFormation Stack parameters)
 - Confirm that the expected AWS service log tables appear in the `Tables` section of the sidebar
 
 ### 5.3 Testing the Glue Tables
-The Glue Tables will be the resource which Athena queries are typically run against.  When Athena queries specify Glue Tables in the `FROM`, these table definitions will determine how the data is interpreted at the time of the query.  It is important to understand that these tables determine the *representation* of the data in the query, it doesn't not change anything about underlying data itself.
+The Glue Tables will be the resource which Athena queries are typically run against.  When Athena queries specify Glue Tables in the `FROM`, these table definitions will determine how the data is interpreted at the time of the query.  It is important to understand that these tables determine the *representation* of the data in the query, it does not change anything about underlying data itself.
 
 - In the `Athena` Service Console Click on `Query editor`
 - On the left sidebar select the database from the drop down menu (`security_analysis` by default or as specified in the CloudFormation Stack parameters)
