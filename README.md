@@ -116,7 +116,7 @@ Many thanks for your contributions:
 - Jonathon Poling
 - Joshua McKiddy
 - Justin Fry
-- Kyle Dickenson
+- Kyle Dickinson
 - Luis Maldonado
 - Matt Gurr
 - Matt Helgen
