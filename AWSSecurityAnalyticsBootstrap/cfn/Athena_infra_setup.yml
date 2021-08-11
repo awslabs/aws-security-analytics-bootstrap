@@ -44,6 +44,16 @@ Metadata:
       - ParamDNSResolverProjectionEventStartDate
       - ParamDNSResolverAccountEnum
       - ParamDNSResolverVPCEnum
+    - Label:
+        default: 'Glue ALB Log Table Parameters'
+      Parameters:
+      - ParamALBTableEnabled
+      - ParamALBTableName
+      - ParamALBProjectionEventStartDate
+      - ParamALBAccountEnum
+      - ParamALBNumRegions
+      - ParamALBSources
+
 Parameters:
   
   # Athena Environment Parameters
@@ -89,7 +99,7 @@ Parameters:
   ParamCloudTrailAccountEnum: 
     Description: 'Account(s) to include in the CloudTrail log table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamVPCFlowSource}/AWSLogs/{account_number}/CloudTrail'
     Type: String
-    Default: '<acount_num_1>,<account_num_2>,...'
+    Default: '<account_num_1>,<account_num_2>,...'
   ParamCloudTrailRegionEnum:
     Description: 'Regions to include in the CloudTrail log table in a comma separated list with NO SPACES; Include all regions for full coverage even if there are no logs currently in that region'
     Type: String
@@ -118,7 +128,7 @@ Parameters:
   ParamVPCFlowAccountEnum:
     Description: 'Account(s) to include in the VPC flow log table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamVPCFlowSource}/AWSLogs/{account_number}/vpcflowlogs/'
     Type: String
-    Default: '<acount_num_1>,<account_num_2>,...'
+    Default: '<account_num_1>,<account_num_2>,...'
   ParamVPCFlowRegionEnum:
     Description: 'Regions to include in the VPC flow log table in a comma separated list with NO SPACES; Include all regions for full coverage even if there are no logs currently in that region'
     Type: String
@@ -147,11 +157,62 @@ Parameters:
   ParamDNSResolverAccountEnum:
     Description: 'Account(s) to include in the Route53 DNS Resolver log table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamVPCFlowSource}/AWSLogs/{account_number}/vpcdnsquerylogs/'
     Type: String
-    Default: <acount_num_1>,<account_num_2>,...
+    Default: <account_num_1>,<account_num_2>,...
   ParamDNSResolverVPCEnum:
     Description: 'VPC IDs to include in the Route53 DNS Resolver log table in a comma separated list with NO SPACES; Include all VPC IDs for full coverage even if there are no logs currently in that VPC'
     Type: String
     Default: <vpc_id_1>,<vpc_id_2>,...
+
+  # ALB Table Parameters
+  ParamALBTableEnabled:
+    Description: 'Do you want to create and enable a table for ALB logs?'
+    Type: String
+    Default: 'YES'
+    AllowedValues:
+    - 'YES'
+    - 'NO'
+  ParamALBNumRegions:
+    Description: 'Number of regions where ALB logs are stored. Should correlate with the number of regions specifed in the ParamALBSources parameter'
+    Type: Number
+    Default: 1
+    AllowedValues:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+    - 15
+    - 16
+    - 17
+    - 18
+    - 19
+    - 20
+    - 21
+  ParamALBTableName:
+    Description: 'Name of the ALB Glue table to create (_<region> will be appended to this name)'
+    Type: String
+    Default: alb
+  ParamALBSources:
+    Description: "Comma seperated list of regions and associated S3 bucket path where logs are stored (including any custom prefix) with NO SPACES (must end with /AWSLogs/) e.g. <region>,s3://<bucket>/<prefix>/AWSLogs/"
+    Type: String
+    Default: <region1>,s3://<bucket>/<prefix>/AWSLogs/,<region2>,s3://<bucket>/<prefix>/AWSLogs/
+  ParamALBProjectionEventStartDate:
+    Description: 'Start date for ALB logs (replace <YYYY>/<MM>/<DD> with the first date of your logs, example: 2020/11/30)'
+    Type: String
+    Default: '<YYYY>/<MM>/<DD>'
+  ParamALBAccountEnum: 
+    Description: 'Account(s) to include in the ALB log table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamALBSource}/AWSLogs/{account_number}/ALB'
+    Type: String
+    Default: '<account_num_1>,<account_num_2>,...'
 
 Conditions:
   ConditionCreateCloudTrailTable: !Equals 
@@ -163,6 +224,212 @@ Conditions:
   ConditionCreateDNSResolverTable: !Equals 
     - !Ref ParamDNSResolverTableEnabled
     - 'YES'
+  ConditionCreateALBTable: !Equals 
+    - !Ref ParamALBTableEnabled
+    - 'YES'
+  Condition1To10ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 1]
+    - !Equals [!Ref ParamALBNumRegions, 2]
+    - !Equals [!Ref ParamALBNumRegions, 3]
+    - !Equals [!Ref ParamALBNumRegions, 4]
+    - !Equals [!Ref ParamALBNumRegions, 5]
+    - !Equals [!Ref ParamALBNumRegions, 6]
+    - !Equals [!Ref ParamALBNumRegions, 7]
+    - !Equals [!Ref ParamALBNumRegions, 8]
+    - !Equals [!Ref ParamALBNumRegions, 9]
+    - !Equals [!Ref ParamALBNumRegions, 10]
+  Condition5To10ALBRegions: !Or    
+    - !Equals [!Ref ParamALBNumRegions, 5]
+    - !Equals [!Ref ParamALBNumRegions, 6]
+    - !Equals [!Ref ParamALBNumRegions, 7]
+    - !Equals [!Ref ParamALBNumRegions, 8]
+    - !Equals [!Ref ParamALBNumRegions, 9]
+    - !Equals [!Ref ParamALBNumRegions, 10]
+  Condition11To20ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 11]
+    - !Equals [!Ref ParamALBNumRegions, 12]
+    - !Equals [!Ref ParamALBNumRegions, 13]
+    - !Equals [!Ref ParamALBNumRegions, 14]
+    - !Equals [!Ref ParamALBNumRegions, 15]
+    - !Equals [!Ref ParamALBNumRegions, 16]
+    - !Equals [!Ref ParamALBNumRegions, 17]
+    - !Equals [!Ref ParamALBNumRegions, 18]
+    - !Equals [!Ref ParamALBNumRegions, 19]
+    - !Equals [!Ref ParamALBNumRegions, 20]
+  Condition15To20ALBRegions: !Or    
+    - !Equals [!Ref ParamALBNumRegions, 15]
+    - !Equals [!Ref ParamALBNumRegions, 16]
+    - !Equals [!Ref ParamALBNumRegions, 17]
+    - !Equals [!Ref ParamALBNumRegions, 18]
+    - !Equals [!Ref ParamALBNumRegions, 19]
+    - !Equals [!Ref ParamALBNumRegions, 20]
+  Condition1ALBRegions: !Or
+    - !Condition Condition1To10ALBRegions
+    - !Condition Condition11To20ALBRegions
+    - !Condition Condition21ALBRegions
+  Condition2ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 2]
+    - !Equals [!Ref ParamALBNumRegions, 3]
+    - !Equals [!Ref ParamALBNumRegions, 4]
+    - !Condition Condition5To10ALBRegions
+    - !Condition Condition11To20ALBRegions
+    - !Condition Condition21ALBRegions
+  Condition3ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 3]
+    - !Equals [!Ref ParamALBNumRegions, 4]
+    - !Condition Condition5To10ALBRegions
+    - !Condition Condition11To20ALBRegions
+    - !Condition Condition21ALBRegions
+  Condition4ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 4]
+    - !Condition Condition5To10ALBRegions
+    - !Condition Condition11To20ALBRegions
+    - !Condition Condition21ALBRegions
+  Condition5ALBRegions: !Or
+    - !Condition Condition5To10ALBRegions
+    - !Condition Condition11To20ALBRegions
+    - !Condition Condition21ALBRegions
+  Condition6ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 6]
+    - !Equals [!Ref ParamALBNumRegions, 7]
+    - !Equals [!Ref ParamALBNumRegions, 8]
+    - !Equals [!Ref ParamALBNumRegions, 9]
+    - !Condition Condition11To20ALBRegions
+    - !Condition Condition21ALBRegions
+  Condition7ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 7]
+    - !Equals [!Ref ParamALBNumRegions, 8]
+    - !Equals [!Ref ParamALBNumRegions, 9]
+    - !Condition Condition11To20ALBRegions
+    - !Condition Condition21ALBRegions
+  Condition8ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 8]
+    - !Equals [!Ref ParamALBNumRegions, 9]
+    - !Condition Condition11To20ALBRegions
+    - !Condition Condition21ALBRegions
+  Condition9ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 9]
+    - !Condition Condition11To20ALBRegions
+    - !Condition Condition21ALBRegions
+  Condition10ALBRegions: !Or
+    - !Condition Condition11To20ALBRegions
+    - !Condition Condition21ALBRegions
+  Condition11ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 11]
+    - !Equals [!Ref ParamALBNumRegions, 12]
+    - !Equals [!Ref ParamALBNumRegions, 13]
+    - !Equals [!Ref ParamALBNumRegions, 14]
+    - !Condition Condition15To20ALBRegions
+    - !Condition Condition21ALBRegions
+  Condition12ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 12]
+    - !Equals [!Ref ParamALBNumRegions, 13]
+    - !Equals [!Ref ParamALBNumRegions, 14]
+    - !Condition Condition15To20ALBRegions
+    - !Condition Condition21ALBRegions
+  Condition13ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 13]
+    - !Equals [!Ref ParamALBNumRegions, 14]
+    - !Condition Condition15To20ALBRegions
+    - !Condition Condition21ALBRegions
+  Condition14ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 14]
+    - !Condition Condition15To20ALBRegions
+    - !Condition Condition21ALBRegions
+  Condition15ALBRegions: !Or
+    - !Condition Condition15To20ALBRegions
+    - !Condition Condition21ALBRegions
+  Condition16ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 16]
+    - !Equals [!Ref ParamALBNumRegions, 17]
+    - !Equals [!Ref ParamALBNumRegions, 18]
+    - !Equals [!Ref ParamALBNumRegions, 19]
+    - !Equals [!Ref ParamALBNumRegions, 20]
+    - !Equals [!Ref ParamALBNumRegions, 21]
+  Condition17ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 17]
+    - !Equals [!Ref ParamALBNumRegions, 18]
+    - !Equals [!Ref ParamALBNumRegions, 19]
+    - !Equals [!Ref ParamALBNumRegions, 20]
+    - !Equals [!Ref ParamALBNumRegions, 21]
+  Condition18ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 18]
+    - !Equals [!Ref ParamALBNumRegions, 19]
+    - !Equals [!Ref ParamALBNumRegions, 20]
+    - !Equals [!Ref ParamALBNumRegions, 21]
+  Condition19ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 19]
+    - !Equals [!Ref ParamALBNumRegions, 20]
+    - !Equals [!Ref ParamALBNumRegions, 21]
+  Condition20ALBRegions: !Or
+    - !Equals [!Ref ParamALBNumRegions, 20]
+    - !Equals [!Ref ParamALBNumRegions, 21]
+  Condition21ALBRegions: !Equals
+    - !Ref ParamALBNumRegions
+    - 21
+  ConditionCreate1ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition1ALBRegions
+  ConditionCreate2ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition2ALBRegions
+  ConditionCreate3ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition3ALBRegions
+  ConditionCreate4ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition4ALBRegions
+  ConditionCreate5ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition5ALBRegions
+  ConditionCreate6ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition6ALBRegions
+  ConditionCreate7ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition7ALBRegions
+  ConditionCreate8ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition8ALBRegions
+  ConditionCreate9ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition9ALBRegions
+  ConditionCreate10ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition10ALBRegions
+  ConditionCreate11ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition11ALBRegions
+  ConditionCreate12ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition12ALBRegions
+  ConditionCreate13ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition13ALBRegions
+  ConditionCreate14ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition14ALBRegions
+  ConditionCreate15ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition15ALBRegions
+  ConditionCreate16ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition16ALBRegions
+  ConditionCreate17ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition17ALBRegions
+  ConditionCreate18ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition18ALBRegions
+  ConditionCreate19ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition19ALBRegions
+  ConditionCreate20ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition20ALBRegions
+  ConditionCreate21ALBTables: !And
+    - !Condition ConditionCreateCloudTrailTable
+    - !Condition Condition21ALBRegions
 
 Resources:
   # Create an AWS Athena Workgroup
@@ -463,6 +730,2275 @@ Resources:
             Parameters:
               serialization.format : "1"
             SerializationLibrary: org.openx.data.jsonserde.JsonSerDe
+
+# Create 1 AWS Glue table for ALB logs
+  ResourceTableALB1:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate1ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [0, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [1, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [0, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [1, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 2 AWS Glue tables for ALB logs
+  ResourceTableALB2:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate2ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [2, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [3, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [2, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [3, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 3 AWS Glue tables for ALB logs
+  ResourceTableALB3:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate3ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [4, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [5, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [4, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [5, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 4 AWS Glue tables for ALB logs
+  ResourceTableALB4:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate4ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [6, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [7, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [6, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [7, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 5 AWS Glue tables for ALB logs
+  ResourceTableALB5:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate5ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [8, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [9, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [8, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [9, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 6 AWS Glue tables for ALB logs
+  ResourceTableALB6:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate6ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [10, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [11, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [10, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [11, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 7 AWS Glue tables for ALB logs
+  ResourceTableALB7:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate7ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [12, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [13, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [12, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [13, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 8 AWS Glue tables for ALB logs
+  ResourceTableALB8:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate8ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [14, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [15, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [14, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [15, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 9 AWS Glue tables for ALB logs
+  ResourceTableALB9:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate9ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [16, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [17, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [16, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [17, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 10 AWS Glue tables for ALB logs
+  ResourceTableALB10:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate10ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [18, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [19, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [18, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [19, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 11 AWS Glue tables for ALB logs
+  ResourceTableALB11:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate11ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [20, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [21, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [20, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [21, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 12 AWS Glue tables for ALB logs
+  ResourceTableALB12:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate12ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [22, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [23, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [22, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [23, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 13 AWS Glue tables for ALB logs
+  ResourceTableALB13:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate13ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [24, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [25, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [24, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [25, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 14 AWS Glue tables for ALB logs
+  ResourceTableALB14:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate14ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [26, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [27, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [26, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [27, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 15 AWS Glue tables for ALB logs
+  ResourceTableALB15:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate15ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [28, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [29, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [28, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [29, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 16 AWS Glue tables for ALB logs
+  ResourceTableALB16:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate16ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [30, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [31, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [30, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [31, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 17 AWS Glue tables for ALB logs
+  ResourceTableALB17:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate17ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [32, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [33, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [32, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [33, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 18 AWS Glue tables for ALB logs
+  ResourceTableALB18:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate18ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [34, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [35, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [34, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [35, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 19 AWS Glue tables for ALB logs
+  ResourceTableALB19:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate19ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [36, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [37, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [36, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [37, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 20 AWS Glue tables for ALB logs
+  ResourceTableALB20:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate20ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [38, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [39, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [38, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [39, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+# Create 21 AWS Glue tables for ALB logs
+  ResourceTableALB21:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreate21ALBTables
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Join [ "_", [!Ref ParamALBTableName, !Join [ "", !Split [ '-', !Select [40, !Split [ ",", !Ref ParamALBSources]] ] ]]]
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [ !Select [41, !Split [ ",", !Ref ParamALBSources]],"${account_partition}/elasticloadbalancing/",!Select [40, !Split [ ",", !Ref ParamALBSources]],"/${date_partition}" ] ]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Select [41, !Split [ ",", !Ref ParamALBSources]]
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
 
 # Create Named Queries for Demo Queries
 # CloudTrail Demo Queries
@@ -1130,3 +3666,213 @@ Resources:
         AND date_partition <= '2020/07/31'
         AND account_partition = '111122223333'
         AND vpc_partition in ('vpc-00000001','vpc-00000002','vpc-00000003');
+
+# ALB Demo Queries
+  ResourceDemoQueryALB1:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_AllPartitions"
+      Description: "preview first 10 rows with all fields, limited by a combination partition constraints"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- preview first 10 rows with all fields, limited by a combination partition constraints
+        -- NOTE: narrowing the scope of the query as much as possible will improve performance and minimize cost
+        SELECT * from alb_uswest2
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND account_partition = '111122223333'
+        LIMIT 10;
+  ResourceDemoQueryALB2:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_AllALB"
+      Description: "Get list of ALBs in all accounts"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get list of ALBs in all accounts
+        SELECT account_partition, elb FROM alb_uswest2
+        GROUP BY account_partition, elb
+        ORDER BY account_partition ASC
+  ResourceDemoQueryALB3:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_BY_REQUEST_COUNT"
+      Description: "Get list of ALBs ordered by the number of records"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get list ALB ordered by the number of records 
+        SELECT elb, account_partition, count(*) as record_count FROM alb_uswest2
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        GROUP BY elb, account_partition
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB4:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_BY_DEST_ALB"
+      Description: "Get count of client IPs for specific alb"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count of client IPs for specific alb 
+        SELECT client_ip, count(*) as record_count FROM alb_uswest2
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND elb LIKE '%testalb%'
+        GROUP BY client_ip
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB5:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_BY_CLIENT_IP"
+      Description: "Get count of requests from specific client IPs"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count of requests from specific client IPs
+        SELECT elb, account_partition, count(*) as record_count FROM alb_uswest2
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND client_ip LIKE '69.110.128.117%'
+        GROUP BY elb, account_partition
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB6:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_SOURCE_DEST"
+      Description: "Get list of source IP/port and destination ALB in specifc AWS account ordered by the number of records"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get list of source IP/port and destination ALB in specifc AWS account ordered by the number of records 
+        SELECT type, elb, client_ip, count(*) as record_count FROM alb_uswest2
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND account_partition = '111122223333'
+        GROUP BY type, elb, client_ip
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB7:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_COUNT_OF_USER_AGENTS"
+      Description: "Get count of user agents ordered by the number of records lowest to highest"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count of user agents ordered by the number of records lowest to highest 
+        SELECT user_agent, count(*) as record_count FROM alb_uswest2
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        GROUP BY user_agent
+        ORDER BY record_count ASC
+  ResourceDemoQueryALB8:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_USER_AGENT_FROM_IP"
+      Description: "Get list of user agents for specific client IP"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get list of user agents for specific client IP
+        SELECT user_agent, count(*) as record_count FROM alb_uswest2
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND client_ip LIKE '69.110.128.117%'
+        GROUP BY user_agent
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB9:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_ELB_STATUS_CODE"
+      Description: "Get count requests with a specific elb status code"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count requests with a specific elb status code
+        SELECT elb, account_partition, count(*) as record_count FROM alb_uswest2
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND elb_status_code = '490'
+        GROUP BY elb, account_partition
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB10:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_TARGET_STATUS_CODE"
+      Description: "Get count requests with a specific target status code"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count requests with a specific target status code
+        SELECT elb, account_partition, count(*) as record_count FROM alb_uswest2
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND target_status_code = '3900'
+        GROUP BY elb, account_partition
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB11:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_NON_HTTPS"
+      Description: "Get count of all non https requests"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count of all non https requests
+        SELECT elb, account_partition, count(*) as record_count FROM alb_uswest2
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND type NOT LIKE 'https'
+        GROUP BY elb, account_partition
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB11:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_BY_SSL_CIPHER"
+      Description: "Get count of all requests with specific ssl sipher"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count of all requests with specific ssl sipher
+        SELECT elb, account_partition, count(*) as record_count FROM alb_uswest2
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND ssl_cipher LIKE '10.0%'
+        GROUP BY elb, account_partition
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB12:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_REQUESTS_BY_ALB_AND_CLIENT_IP"
+      Description: "Get requests info from specific client IPs to specific ALB"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get requests info from specific client IPs to specific ALB
+        SELECT type, 
+                    time, 
+                    elb_status_code, 
+                    target_status_code, 
+                    received_bytes, 
+                    sent_bytes, 
+                    request_verb, 
+                    request_url, 
+                    request_proto, 
+                    user_agent, 
+                    ssl_cipher, 
+                    ssl_protocol, 
+                    trace_id, 
+                    domain_name,
+                    chosen_cert_arn, 
+                    matched_rule_priority,
+                    request_creation_time,
+                    redirect_url,
+                    actions_executed  
+        FROM alb_uswest2
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND client_ip LIKE '69.110.128.117%'
+        AND elb LIKE '%testalb%'

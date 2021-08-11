@@ -7,8 +7,8 @@ The first step is to verify that the expected logs have been enabled and are cur
 - Enable [AWS CloudTrail](https://docs.aws.amazon.com/cloudtrail/index.html) for all accounts
 - Enable [Amazon Virtual Private Cloud (VPC) Flow Logs](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html) and [Amazon Route 53 DNS resolver query logs](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver-query-logs.html) for all VPCs
 - Enable Amazon S3 data events in CloudTrail to monitor S3 object level events (If a high volume of S3 data events is expected, data events can be enabled in a separate trail so they can be searched seperately)
-- Enable VPC Flow Logs with a custom field configuration including [all available fields through v5](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html#flow-logs-fields). 
-
+- Enable VPC Flow Logs with a custom field configuration including [all available fields through v5](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html#flow-logs-fields).
+- Enable [Amazon Application Load Balancer (ALB) Logs](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html)
 
 **WARNING:** AWS Security Analytics Bootstrap expects VPC Flow Log fields to be in exactly this order (specifically for custom configurations): 
 
@@ -90,6 +90,12 @@ Route53 DNS Resolver Logs Source Location | S3 base path of Route53 DNS Resolver
 Route53 DNS Resolver Logs Projection Event Start Date | Start date for Route53 DNS Resolver logs (replace <YYYY>/<MM>/<DD> with the first date of your logs, example: 2020/11/30) | `<YYYY>/<MM>/<DD>`
 Route53 DNS Resolver Logs Account List |  Account(s) to include in the Route53 DNS Resolver Logs table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamVPCFlowSource}/AWSLogs/{account_number}/vpcdnsquerylogs | `0123456789,0123456788,0123456777`
 Route53 DNS Resolver Logs VPC List | VPC IDs to include in the Route53 DNS Resolver log table in a comma seperated list with NO SPACES; Include all VPC IDs for full coverage even if there are no logs currently in that VPC | `<vpc_id_1>,<vpc_id_2>,...`
+Enable ALB Logs Glue Table | Do you want to create and enable a table for ALB logs? | `Yes`
+ALB Logs Glue Table Name | Name of the ALB Logs Glue table to create | `alb`
+ALB Logs Projection Event Start Date | Start date for ALB logs (replace <YYYY>/<MM>/<DD> with the first date of your logs, example: 2020/11/30) | `<YYYY>/<MM>/<DD>`
+ALB Logs Account List |  Account(s) to include in the ALB Logs table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamALBSource}/AWSLogs/{account_number}/elasticloadbalancing | `0123456789,0123456788,0123456777`
+ALB Logs Number of Regions | Number of regions where ALB logs exist. A seperate Glue table will be created for each region. | 1-21
+ALB Logs Sources List | List of regions and corresponding s3 base paths where ALB logs are located (s3 base path must end with /AWSLogs/) in a comma seperated list with NO SPACES; The number of regions specifed must be the same as what is specified in the ParamNumRegions parameter. A seperate Glue table will be created for each region using the values specifed | `<region1>,s3://<bucket>/<prefix>/AWSLogs/,<region2>,s3://<bucket>/<prefix>/AWSLogs/...`
 
 ## 2 Deploy AWS Security Analytics Bootstrap IAM CloudFormation Template (optional)
 
