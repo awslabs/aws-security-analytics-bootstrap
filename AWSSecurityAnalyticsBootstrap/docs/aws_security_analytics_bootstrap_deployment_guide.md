@@ -94,7 +94,7 @@ Enable ALB Logs Glue Table | Do you want to create and enable a table for ALB lo
 ALB Logs Glue Table Name | Name of the ALB Logs Glue table to create | `alb`
 ALB Logs Projection Event Start Date | Start date for ALB logs (replace <YYYY>/<MM>/<DD> with the first date of your logs, example: 2020/11/30) | `<YYYY>/<MM>/<DD>`
 ALB Logs Account List |  Account(s) to include in the ALB Logs table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamALBSource}/AWSLogs/{account_number}/elasticloadbalancing | `0123456789,0123456788,0123456777`
-ALB Logs Region | The regions where ALB logs exist. | us-east-1
+ALB Logs Region | The region where ALB logs exist. | us-east-1
 ALB Logs Source | s3 base path where ALB logs are located. (s3 base path must end with /AWSLogs/) with NO SPACES | `s3://<bucket>/<prefix>/AWSLogs/`
 
 ## 2 Deploy AWS Security Analytics Bootstrap IAM CloudFormation Template (optional)
