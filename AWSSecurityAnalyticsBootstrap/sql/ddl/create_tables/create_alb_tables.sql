@@ -1,14 +1,14 @@
 /* 
 Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
-    Creates a alb_logs table for alb logs delivered directly to an S3 bucket
+    Creates a alb table for alb logs delivered directly to an S3 bucket
     Includes partitioning configuration for multi-account deployment as well as date in YYYY/MM/DD format
 */
 
 /*
-    TODO: optionally update the table name "alb_logs" to the name you'd like to use for the ALB log table 
+    TODO: optionally update the table name "alb" to the name you'd like to use for the ALB log table 
 */
-CREATE EXTERNAL TABLE IF NOT EXISTS alb_logs (
+CREATE EXTERNAL TABLE IF NOT EXISTS alb (
     type string,
     time string,
     elb string,
@@ -75,7 +75,7 @@ TBLPROPERTIES
  */
  "projection.account_partition.values" = "<account_num_1>,<account_num_2>,...",
  /*
-    TODO: Same as LOCATION, replace bucket_name and optional_prefix in storage.location.template value, 
+    TODO: replace <bucket_name>, <optional_prefix> and <region> in storage.location.template value, 
     if there's no prefix then remove the extra /
     example: s3://my_central_log_bucket/AWSLogs/... or s3://my_central_log_bucket/PROD/AWSLogs/...
     NOTE: do not change parameters that look like ${...}, those are template variables, only replace values in angle brackets <...>
