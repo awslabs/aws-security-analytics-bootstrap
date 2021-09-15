@@ -44,6 +44,16 @@ Metadata:
       - ParamDNSResolverProjectionEventStartDate
       - ParamDNSResolverAccountEnum
       - ParamDNSResolverVPCEnum
+    - Label:
+        default: 'Glue ALB Log Table Parameters'
+      Parameters:
+      - ParamALBTableEnabled
+      - ParamALBTableName
+      - ParamALBProjectionEventStartDate
+      - ParamALBAccountEnum
+      - ParamALBRegion
+      - ParamALBSource
+
 Parameters:
   
   # Athena Environment Parameters
@@ -89,7 +99,7 @@ Parameters:
   ParamCloudTrailAccountEnum: 
     Description: 'Account(s) to include in the CloudTrail log table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamVPCFlowSource}/AWSLogs/{account_number}/CloudTrail'
     Type: String
-    Default: '<acount_num_1>,<account_num_2>,...'
+    Default: '<account_num_1>,<account_num_2>,...'
   ParamCloudTrailRegionEnum:
     Description: 'Regions to include in the CloudTrail log table in a comma separated list with NO SPACES; Include all regions for full coverage even if there are no logs currently in that region'
     Type: String
@@ -118,7 +128,7 @@ Parameters:
   ParamVPCFlowAccountEnum:
     Description: 'Account(s) to include in the VPC flow log table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamVPCFlowSource}/AWSLogs/{account_number}/vpcflowlogs/'
     Type: String
-    Default: '<acount_num_1>,<account_num_2>,...'
+    Default: '<account_num_1>,<account_num_2>,...'
   ParamVPCFlowRegionEnum:
     Description: 'Regions to include in the VPC flow log table in a comma separated list with NO SPACES; Include all regions for full coverage even if there are no logs currently in that region'
     Type: String
@@ -147,11 +157,40 @@ Parameters:
   ParamDNSResolverAccountEnum:
     Description: 'Account(s) to include in the Route53 DNS Resolver log table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamVPCFlowSource}/AWSLogs/{account_number}/vpcdnsquerylogs/'
     Type: String
-    Default: <acount_num_1>,<account_num_2>,...
+    Default: <account_num_1>,<account_num_2>,...
   ParamDNSResolverVPCEnum:
     Description: 'VPC IDs to include in the Route53 DNS Resolver log table in a comma separated list with NO SPACES; Include all VPC IDs for full coverage even if there are no logs currently in that VPC'
     Type: String
     Default: <vpc_id_1>,<vpc_id_2>,...
+
+  # ALB Table Parameters
+  ParamALBTableEnabled:
+    Description: 'Do you want to create and enable a table for ALB logs?'
+    Type: String
+    Default: 'YES'
+    AllowedValues:
+    - 'YES'
+    - 'NO'
+  ParamALBRegion:
+    Description: 'Region where ALB logs are stored'
+    Type: String
+    Default: <region>
+  ParamALBTableName:
+    Description: 'Name of the ALB Glue table to create'
+    Type: String
+    Default: alb
+  ParamALBSource:
+    Description: "S3 bucket path where logs are stored (including any custom prefix) with NO SPACES (must end with /AWSLogs/) and be located in the region specified in ParamALBRegion"
+    Type: String
+    Default: s3://<bucket>/<prefix>/AWSLogs/
+  ParamALBProjectionEventStartDate:
+    Description: 'Start date for ALB logs (replace <YYYY>/<MM>/<DD> with the first date of your logs, example: 2020/11/30)'
+    Type: String
+    Default: '<YYYY>/<MM>/<DD>'
+  ParamALBAccountEnum: 
+    Description: 'Account(s) to include in the ALB log table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamALBSource}/AWSLogs/{account_number}/ALB'
+    Type: String
+    Default: '<account_num_1>,<account_num_2>,...'
 
 Conditions:
   ConditionCreateCloudTrailTable: !Equals 
@@ -162,6 +201,9 @@ Conditions:
     - 'YES'
   ConditionCreateDNSResolverTable: !Equals 
     - !Ref ParamDNSResolverTableEnabled
+    - 'YES'
+  ConditionCreateALBTable: !Equals 
+    - !Ref ParamALBTableEnabled
     - 'YES'
 
 Resources:
@@ -463,6 +505,115 @@ Resources:
             Parameters:
               serialization.format : "1"
             SerializationLibrary: org.openx.data.jsonserde.JsonSerDe
+
+# Create AWS Glue table for ALB logs
+  ResourceTableALB:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreateALBTable
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Ref ParamALBTableName
+        Description: Table for ALB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamALBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamALBAccountEnum,
+          "storage.location.template": !Join [ "", [!Ref ParamALBSource, "${account_partition}/elasticloadbalancing/", !Ref ParamALBRegion, "/${date_partition}"]]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port 
+            Type: int
+          - Name: target_ip
+            Type: string
+          - Name: target_port
+            Type: int
+          - Name: request_processing_time
+            Type: double
+          - Name: target_processing_time
+            Type: double
+          - Name: response_processing_time
+            Type: double
+          - Name: elb_status_code
+            Type: string
+          - Name: target_status_code
+            Type: string
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: request_verb
+            Type: string
+          - Name: request_url
+            Type: string
+          - Name: request_proto
+            Type: string
+          - Name: user_agent
+            Type: string
+          - Name: ssl_cipher
+            Type: string
+          - Name: ssl_protocol
+            Type: string
+          - Name: target_group_arn
+            Type: string
+          - Name: trace_id
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: chosen_cert_arn
+            Type: string
+          - Name: matched_rule_priority
+            Type: string
+          - Name: request_creation_time
+            Type: string
+          - Name: actions_executed
+            Type: string
+          - Name: redirect_url
+            Type: string
+          - Name: lambda_error_reason
+            Type: string
+          - Name: target_port_list
+            Type: string
+          - Name: target_status_code_list
+            Type: string
+          - Name: classification
+            Type: string
+          - Name: classification_reason
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Ref ParamALBSource
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
 
 # Create Named Queries for Demo Queries
 # CloudTrail Demo Queries
@@ -1130,3 +1281,213 @@ Resources:
         AND date_partition <= '2020/07/31'
         AND account_partition = '111122223333'
         AND vpc_partition in ('vpc-00000001','vpc-00000002','vpc-00000003');
+
+# ALB Demo Queries
+  ResourceDemoQueryALB1:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_AllPartitions"
+      Description: "preview first 10 rows with all fields, limited by a combination partition constraints"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- preview first 10 rows with all fields, limited by a combination partition constraints
+        -- NOTE: narrowing the scope of the query as much as possible will improve performance and minimize cost
+        SELECT * from alb
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND account_partition = '111122223333'
+        LIMIT 10;
+  ResourceDemoQueryALB2:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_AllALB"
+      Description: "Get list of ALBs in all accounts"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get list of ALBs in all accounts
+        SELECT account_partition, elb FROM alb
+        GROUP BY account_partition, elb
+        ORDER BY account_partition ASC
+  ResourceDemoQueryALB3:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_BY_REQUEST_COUNT"
+      Description: "Get list of ALBs ordered by the number of records"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get list ALB ordered by the number of records 
+        SELECT elb, account_partition, count(*) as record_count FROM alb
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        GROUP BY elb, account_partition
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB4:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_BY_DEST_ALB"
+      Description: "Get count of client IPs for specific alb"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count of client IPs for specific alb 
+        SELECT client_ip, count(*) as record_count FROM alb
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND elb LIKE '%testalb%'
+        GROUP BY client_ip
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB5:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_BY_CLIENT_IP"
+      Description: "Get count of requests from specific client IPs"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count of requests from specific client IPs
+        SELECT elb, account_partition, count(*) as record_count FROM alb
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND client_ip LIKE '69.110.128.117%'
+        GROUP BY elb, account_partition
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB6:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_SOURCE_DEST"
+      Description: "Get list of source IP/port and destination ALB in specifc AWS account ordered by the number of records"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get list of source IP/port and destination ALB in specifc AWS account ordered by the number of records 
+        SELECT type, elb, client_ip, count(*) as record_count FROM alb
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND account_partition = '111122223333'
+        GROUP BY type, elb, client_ip
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB7:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_COUNT_OF_USER_AGENTS"
+      Description: "Get count of user agents ordered by the number of records lowest to highest"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count of user agents ordered by the number of records lowest to highest 
+        SELECT user_agent, count(*) as record_count FROM alb
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        GROUP BY user_agent
+        ORDER BY record_count ASC
+  ResourceDemoQueryALB8:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_USER_AGENT_FROM_IP"
+      Description: "Get list of user agents for specific client IP"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get list of user agents for specific client IP
+        SELECT user_agent, count(*) as record_count FROM alb
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND client_ip LIKE '69.110.128.117%'
+        GROUP BY user_agent
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB9:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_ELB_STATUS_CODE"
+      Description: "Get count requests with a specific elb status code"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count requests with a specific elb status code
+        SELECT elb, account_partition, count(*) as record_count FROM alb
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND elb_status_code = '490'
+        GROUP BY elb, account_partition
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB10:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_TARGET_STATUS_CODE"
+      Description: "Get count requests with a specific target status code"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count requests with a specific target status code
+        SELECT elb, account_partition, count(*) as record_count FROM alb
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND target_status_code = '3900'
+        GROUP BY elb, account_partition
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB11:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_NON_HTTPS"
+      Description: "Get count of all non https requests"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count of all non https requests
+        SELECT elb, account_partition, count(*) as record_count FROM alb
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND type NOT LIKE 'https'
+        GROUP BY elb, account_partition
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB11:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_BY_SSL_CIPHER"
+      Description: "Get count of all requests with specific ssl sipher"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count of all requests with specific ssl sipher
+        SELECT elb, account_partition, count(*) as record_count FROM alb
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND ssl_cipher LIKE '10.0%'
+        GROUP BY elb, account_partition
+        ORDER BY record_count DESC
+  ResourceDemoQueryALB12:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ALB_REQUESTS_BY_ALB_AND_CLIENT_IP"
+      Description: "Get requests info from specific client IPs to specific ALB"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get requests info from specific client IPs to specific ALB
+        SELECT      type,
+                    time,
+                    elb_status_code,
+                    target_status_code,
+                    received_bytes,
+                    sent_bytes,
+                    request_verb,
+                    request_url,
+                    request_proto,
+                    user_agent,
+                    ssl_cipher,
+                    ssl_protocol,
+                    trace_id,
+                    domain_name,
+                    chosen_cert_arn,
+                    matched_rule_priority,
+                    request_creation_time,
+                    redirect_url,
+                    actions_executed
+        FROM alb
+        WHERE date_partition >= '2021/07/01'
+        AND date_partition <= '2021/07/31'
+        AND client_ip LIKE '69.110.128.117%'
+        AND elb LIKE '%testalb%'

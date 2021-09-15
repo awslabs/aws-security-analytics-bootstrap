@@ -7,8 +7,8 @@ The first step is to verify that the expected logs have been enabled and are cur
 - Enable [AWS CloudTrail](https://docs.aws.amazon.com/cloudtrail/index.html) for all accounts
 - Enable [Amazon Virtual Private Cloud (VPC) Flow Logs](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html) and [Amazon Route 53 DNS resolver query logs](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver-query-logs.html) for all VPCs
 - Enable Amazon S3 data events in CloudTrail to monitor S3 object level events (If a high volume of S3 data events is expected, data events can be enabled in a separate trail so they can be searched seperately)
-- Enable VPC Flow Logs with a custom field configuration including [all available fields through v5](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html#flow-logs-fields). 
-
+- Enable VPC Flow Logs with a custom field configuration including [all available fields through v5](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html#flow-logs-fields).
+- Enable [Amazon Application Load Balancer (ALB) Logs](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html)
 
 **WARNING:** AWS Security Analytics Bootstrap expects VPC Flow Log fields to be in exactly this order (specifically for custom configurations): 
 
@@ -90,6 +90,12 @@ Route53 DNS Resolver Logs Source Location | S3 base path of Route53 DNS Resolver
 Route53 DNS Resolver Logs Projection Event Start Date | Start date for Route53 DNS Resolver logs (replace <YYYY>/<MM>/<DD> with the first date of your logs, example: 2020/11/30) | `<YYYY>/<MM>/<DD>`
 Route53 DNS Resolver Logs Account List |  Account(s) to include in the Route53 DNS Resolver Logs table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamVPCFlowSource}/AWSLogs/{account_number}/vpcdnsquerylogs | `0123456789,0123456788,0123456777`
 Route53 DNS Resolver Logs VPC List | VPC IDs to include in the Route53 DNS Resolver log table in a comma seperated list with NO SPACES; Include all VPC IDs for full coverage even if there are no logs currently in that VPC | `<vpc_id_1>,<vpc_id_2>,...`
+Enable ALB Logs Glue Table | Do you want to create and enable a table for ALB logs? | `Yes`
+ALB Logs Glue Table Name | Name of the ALB Logs Glue table to create | `alb`
+ALB Logs Projection Event Start Date | Start date for ALB logs (replace <YYYY>/<MM>/<DD> with the first date of your logs, example: 2020/11/30) | `<YYYY>/<MM>/<DD>`
+ALB Logs Account List |  Account(s) to include in the ALB Logs table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamALBSource}/AWSLogs/{account_number}/elasticloadbalancing | `0123456789,0123456788,0123456777`
+ALB Logs Region | The region where ALB logs exist. | us-east-1
+ALB Logs Source | s3 base path where ALB logs are located. (s3 base path must end with /AWSLogs/) with NO SPACES | `s3://<bucket>/<prefix>/AWSLogs/`
 
 ## 2 Deploy AWS Security Analytics Bootstrap IAM CloudFormation Template (optional)
 
@@ -129,14 +135,14 @@ The Athena Workgroup will determine where/how Athena output results are stored, 
 - With the Athena Workgroup selected click `Switch workgroup`, this will set this workgroup as the active workgroup.  Note that Athena may ask for  acknowledgment to confirm the user's query output is being logged to the specified S3 location.
 
 ### 5.2 Setting the Glue Database
-The Glue Database will determine what Glue tables are visible, and will be the default database for all queries which don't explicitly specify a database name.  For this reason it's recommended to ensure that users ensure that have selected the appropriate database prior to running queries.  This may need to be reset periodically if the user navigates away from the `Query editor` view.
+The Glue Database will determine what Glue tables are visible, and will be the default database for all queries which don't explicitly specify a database name.  For this reason, it is recommended that users validate that the appropriate database has been selected prior to running queries.  This may need to be reset periodically if the user navigates away from the `Query editor` view.
 
 - In the `Athena` Service Console Click on `Query editor` (in the top bar)
 - On the left sidebar select the database from the drop down menu (`security_analysis` by default or as specified in the CloudFormation Stack parameters)
 - Confirm that the expected AWS service log tables appear in the `Tables` section of the sidebar
 
 ### 5.3 Testing the Glue Tables
-The Glue Tables will be the resource which Athena queries are typically run against.  When Athena queries specify Glue Tables in the `FROM`, these table definitions will determine how the data is interpreted at the time of the query.  It is important to understand that these tables determine the *representation* of the data in the query, it doesn't not change anything about underlying data itself.
+The Glue Tables will be the resource which Athena queries are typically run against.  When Athena queries specify Glue Tables in the `FROM`, these table definitions will determine how the data is interpreted at the time of the query.  It is important to understand that these tables determine the *representation* of the data in the query, it does not change anything about underlying data itself.
 
 - In the `Athena` Service Console Click on `Query editor`
 - On the left sidebar select the database from the drop down menu (`security_analysis` by default or as specified in the CloudFormation Stack parameters)
