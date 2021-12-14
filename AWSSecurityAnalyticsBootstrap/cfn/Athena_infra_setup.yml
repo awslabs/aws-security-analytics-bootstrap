@@ -1443,7 +1443,7 @@ Resources:
         AND type NOT LIKE 'https'
         GROUP BY elb, account_partition
         ORDER BY record_count DESC
-  ResourceDemoQueryALB11:
+  ResourceDemoQueryALB12:
     Type: AWS::Athena::NamedQuery
     Properties: 
       Name: "DEMO_ALB_BY_SSL_CIPHER"
@@ -1458,7 +1458,7 @@ Resources:
         AND ssl_cipher LIKE '10.0%'
         GROUP BY elb, account_partition
         ORDER BY record_count DESC
-  ResourceDemoQueryALB12:
+  ResourceDemoQueryALB13:
     Type: AWS::Athena::NamedQuery
     Properties: 
       Name: "DEMO_ALB_REQUESTS_BY_ALB_AND_CLIENT_IP"
