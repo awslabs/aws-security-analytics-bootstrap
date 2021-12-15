@@ -1,47 +1,37 @@
 /* 
 Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
-    Creates a alb table for alb logs delivered directly to an S3 bucket
+    Creates a elb table for elb logs delivered directly to an S3 bucket
     Includes partitioning configuration for multi-account deployment as well as date in YYYY/MM/DD format
 */
 
 /*
-    TODO: optionally update the table name "alb" to the name you'd like to use for the ALB log table 
+    TODO: optionally update the table name "elb" to the name you'd like to use for the ELB log table 
 */
-CREATE EXTERNAL TABLE IF NOT EXISTS alb (
+CREATE EXTERNAL TABLE IF NOT EXISTS elb (
     type string,
+    version string,
     time string,
     elb string,
+    listener_id string,
     client_ip string,
     client_port int,
     target_ip string,
     target_port int,
-    request_processing_time double,
-    target_processing_time double,
-    response_processing_time double,
-    elb_status_code string,
-    target_status_code string,
+    tcp_connection_time_ms double,
+    tls_handshake_time_ms double,
     received_bytes bigint,
     sent_bytes bigint,
-    request_verb string,
-    request_url string,
-    request_proto string,
-    user_agent string,
-    ssl_cipher string,
-    ssl_protocol string,
-    target_group_arn string,
-    trace_id string,
+    incoming_tls_alert int,
+    cert_arn string,
+    certificate_serial string,
+    tls_cipher_suite string,
+    tls_protocol_version string,
+    tls_named_group string,
     domain_name string,
-    chosen_cert_arn string,
-    matched_rule_priority string,
-    request_creation_time string,
-    actions_executed string,
-    redirect_url string,
-    lambda_error_reason string,
-    target_port_list string,
-    target_status_code_list string,
-    classification string,
-    classification_reason string
+    alpn_fe_protocol string,
+    alpn_be_protocol string,
+    alpn_client_preference_list string
 )
 PARTITIONED BY
 (
@@ -51,7 +41,7 @@ PARTITIONED BY
 ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.RegexSerDe'
 WITH SERDEPROPERTIES (
     'serialization.format' = '1',
-    'input.regex' = '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) (.*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-_]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"')
+    'input.regex' = '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*):([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-0-9]*) ([-0-9]*) ([-0-9]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*)$')
 /*
     TODO: replace bucket_name and optional_prefix in LOCATION value, 
     if there's no prefix then remove the extra /

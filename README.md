@@ -22,7 +22,8 @@ AWS Security Analytics Bootstrap is designed to be ready to use for common secur
 [AWS CloudTrail](https://docs.aws.amazon.com/cloudtrail/index.html) | AWS API Events (Management and Data Events)
 [Amazon Virtual Private Cloud (VPC) Flow Logs](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html) | Network Events
 [Amazon Route 53 DNS resolver query logs](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver-query-logs.html) | DNS Resolution Events
-[Amazon Application Load Balancer (ALB) logs](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html) | Application Traffic traversing Load Balancers
+[Amazon Application Load Balancer (ALB) logs](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html) | Application Traffic Traversing Load Balancers
+[Amazon Network Load Balancer (ELB) logs](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-access-logs.html) | TLS Traffic Traversing Network Load Balancers
 
 *NOTE:* We will be adding support for additional AWS Service Logs commonly used in security investigations, please feel free to submit or upvote your requests in `Issues`
 
@@ -34,7 +35,7 @@ Single Account Deployment  |  Cross-Account Deployment
 ## Deploying AWS Security Analytics Bootstrap
 
 ### Prerequisites
-- AWS service logs (e.g. AWS CloudTrail, Amazon VPC Flow Logs, Amazon Route 53 Resolver Query Logs, Amazon ALB Logs) must be delivered to Amazon S3 buckets unmodified in their native format
+- AWS service logs (e.g. AWS CloudTrail, Amazon VPC Flow Logs, Amazon Route 53 Resolver Query Logs, Amazon ALB/ELB Logs) must be delivered to Amazon S3 buckets unmodified in their native format
 - For [cross-account deployments](https://docs.aws.amazon.com/athena/latest/ug/cross-account-permissions.html) bucket policies must be in place and objects need to be owned by the bucket account owner to enable cross-account access
 - For logs encrypted via AWS KMS the AWS IAM principal(s) that will be used to submit Athena queries will need to have permissions for `kms:Decrypt` and `kms:DescribeKey` in their IAM policy and the KMS key policy will need to grant them the same access
 
