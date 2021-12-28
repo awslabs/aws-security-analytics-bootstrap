@@ -9,6 +9,7 @@ The first step is to verify that the expected logs have been enabled and are cur
 - Enable Amazon S3 data events in CloudTrail to monitor S3 object level events (If a high volume of S3 data events is expected, data events can be enabled in a separate trail so they can be searched seperately)
 - Enable VPC Flow Logs with a custom field configuration including [all available fields through v5](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html#flow-logs-fields).
 - Enable [Amazon Application Load Balancer (ALB) Logs](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html)
+- Enable [Amazon Network Load Balancer (ELB) Logs](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-access-logs.html)
 
 **WARNING:** AWS Security Analytics Bootstrap expects VPC Flow Log fields to be in exactly this order (specifically for custom configurations): 
 
@@ -96,6 +97,12 @@ ALB Logs Projection Event Start Date | Start date for ALB logs (replace <YYYY>/<
 ALB Logs Account List |  Account(s) to include in the ALB Logs table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamALBSource}/AWSLogs/{account_number}/elasticloadbalancing | `0123456789,0123456788,0123456777`
 ALB Logs Region | The region where ALB logs exist. | us-east-1
 ALB Logs Source | s3 base path where ALB logs are located. (s3 base path must end with /AWSLogs/) with NO SPACES | `s3://<bucket>/<prefix>/AWSLogs/`
+Enable ELB Logs Glue Table | Do you want to create and enable a table for ELB logs? | `Yes`
+ELB Logs Glue Table Name | Name of the ELB Logs Glue table to create | `elb`
+ELB Logs Projection Event Start Date | Start date for ELB logs (replace <YYYY>/<MM>/<DD> with the first date of your logs, example: 2020/11/30) | `<YYYY>/<MM>/<DD>`
+ELB Logs Account List |  Account(s) to include in the ELB Logs table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamELBSource}/AWSLogs/{account_number}/elasticloadbalancing | `0123456789,0123456788,0123456777`
+ELB Logs Region | The region where ELB logs exist. | us-east-1
+ELB Logs Source | s3 base path where ELB logs are located. (s3 base path must end with /AWSLogs/) with NO SPACES | `s3://<bucket>/<prefix>/AWSLogs/`
 
 ## 2 Deploy AWS Security Analytics Bootstrap IAM CloudFormation Template (optional)
 

@@ -53,6 +53,15 @@ Metadata:
       - ParamALBAccountEnum
       - ParamALBRegion
       - ParamALBSource
+    - Label:
+        default: 'Glue ELB Log Table Parameters'
+      Parameters:
+      - ParamELBTableEnabled
+      - ParamELBTableName
+      - ParamELBProjectionEventStartDate
+      - ParamELBAccountEnum
+      - ParamELBRegion
+      - ParamELBSource
 
 Parameters:
   
@@ -192,6 +201,35 @@ Parameters:
     Type: String
     Default: '<account_num_1>,<account_num_2>,...'
 
+  # ELB Table Parameters
+  ParamELBTableEnabled:
+    Description: 'Do you want to create and enable a table for ELB logs?'
+    Type: String
+    Default: 'YES'
+    AllowedValues:
+    - 'YES'
+    - 'NO'
+  ParamELBRegion:
+    Description: 'Region where ELB logs are stored'
+    Type: String
+    Default: <region>
+  ParamELBTableName:
+    Description: 'Name of the ELB Glue table to create'
+    Type: String
+    Default: elb
+  ParamELBSource:
+    Description: "S3 bucket path where logs are stored (including any custom prefix) with NO SPACES (must end with /AWSLogs/) and be located in the region specified in ParamELBRegion"
+    Type: String
+    Default: s3://<bucket>/<prefix>/AWSLogs/
+  ParamELBProjectionEventStartDate:
+    Description: 'Start date for ELB logs (replace <YYYY>/<MM>/<DD> with the first date of your logs, example: 2020/11/30)'
+    Type: String
+    Default: '<YYYY>/<MM>/<DD>'
+  ParamELBAccountEnum: 
+    Description: 'Account(s) to include in the ELB log table in a comma separated list with NO SPACES (example: "0123456789,0123456788,0123456777"); note that all accounts must be logging to the same source, with contents in {ParamELBSource}/AWSLogs/{account_number}/ELB'
+    Type: String
+    Default: '<account_num_1>,<account_num_2>,...'
+
 Conditions:
   ConditionCreateCloudTrailTable: !Equals 
     - !Ref ParamCloudTrailTableEnabled
@@ -204,6 +242,9 @@ Conditions:
     - 'YES'
   ConditionCreateALBTable: !Equals 
     - !Ref ParamALBTableEnabled
+    - 'YES'
+  ConditionCreateELBTable: !Equals 
+    - !Ref ParamELBTableEnabled
     - 'YES'
 
 Resources:
@@ -613,6 +654,95 @@ Resources:
             Parameters:
               serialization.format: '1'
               input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
+
+# Create AWS Glue table for ELB logs
+  ResourceTableELB:
+    # Creating the table waits for the database to be created
+    DependsOn: ResourceDatabaseASL
+    Type: AWS::Glue::Table
+    Condition: ConditionCreateELBTable
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref ParamDatabaseName
+      TableInput:
+        Name: !Ref ParamELBTableName
+        Description: Table for ELB logs
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+          "classification": "csv",
+          "EXTERNAL": "true",
+          "skip.header.line.count": "1",
+          "projection.enabled": "true",
+          "projection.date_partition.type": "date",
+          "projection.date_partition.range": !Join [ ',' , [!Ref ParamELBProjectionEventStartDate,'NOW']],
+          "projection.date_partition.format": "yyyy/MM/dd",
+          "projection.date_partition.interval": "1",
+          "projection.date_partition.interval.unit": "DAYS",
+          "projection.account_partition.type": "enum",
+          "projection.account_partition.values": !Ref ParamELBAccountEnum,
+          "storage.location.template": !Join [ "", [!Ref ParamELBSource, "${account_partition}/elasticloadbalancing/", !Ref ParamELBRegion, "/${date_partition}"]]
+        }
+        PartitionKeys:
+        - Name: date_partition
+          Type: string
+        - Name: account_partition
+          Type: string
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns:
+          - Name: type
+            Type: string
+          - Name: version
+            Type: string
+          - Name: time
+            Type: string
+          - Name: elb
+            Type: string
+          - Name: listener_id
+            Type: string
+          - Name: client_ip
+            Type: string
+          - Name: client_port
+            Type: int
+          - Name: target_ip 
+            Type: string
+          - Name: target_port 
+            Type: int
+          - Name: tcp_connection_time_ms
+            Type: double
+          - Name: tls_handshake_time_ms
+            Type: double
+          - Name: received_bytes
+            Type: bigint
+          - Name: sent_bytes
+            Type: bigint
+          - Name: incoming_tls_alert
+            Type: int
+          - Name: cert_arn
+            Type: string
+          - Name: certificate_serial
+            Type: string
+          - Name: tls_cipher_suite
+            Type: string
+          - Name: tls_protocol_version
+            Type: string
+          - Name: tls_named_group
+            Type: string
+          - Name: domain_name
+            Type: string
+          - Name: alpn_fe_protocol
+            Type: string
+          - Name: alpn_be_protocol
+            Type: string
+          - Name: alpn_client_preference_list
+            Type: string
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Ref ParamELBSource
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+              input.regex: '([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*):([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-0-9]*) ([-0-9]*) ([-0-9]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*)$'
             SerializationLibrary: org.apache.hadoop.hive.serde2.RegexSerDe
 
 # Create Named Queries for Demo Queries
@@ -1491,3 +1621,212 @@ Resources:
         AND date_partition <= '2021/07/31'
         AND client_ip LIKE '69.110.128.117%'
         AND elb LIKE '%testalb%'
+
+# ELB Demo Queries
+  ResourceDemoQueryELB1:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ELB_AllPartitions"
+      Description: "preview first 10 rows with all fields, limited by a combination partition constraints"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- preview first 10 rows with all fields, limited by a combination partition constraints
+        -- NOTE: narrowing the scope of the query as much as possible will improve performance and minimize cost
+        SELECT * from elb
+        WHERE date_partition >= '2021/12/01'
+        AND date_partition <= '2021/12/31'
+        AND account_partition = '111122223333'
+        LIMIT 10;
+  ResourceDemoQueryELB2:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ELB_AllELB"
+      Description: "Get list of ELBs in all accounts"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get list of ELBs in all accounts
+        SELECT account_partition, elb FROM elb
+        GROUP BY account_partition, elb
+        ORDER BY account_partition ASC
+  ResourceDemoQueryELB3:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ELB_BY_REQUEST_COUNT"
+      Description: "Get list of ELBs ordered by the number of records"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get list ELB ordered by the number of records 
+        SELECT elb, account_partition, count(*) as record_count FROM elb
+        WHERE date_partition >= '2021/12/01'
+        AND date_partition <= '2021/12/31'
+        GROUP BY elb, account_partition
+        ORDER BY record_count DESC
+  ResourceDemoQueryELB4:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ELB_LISTENER_IDS"
+      Description: "Get list of listener IDs"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get list of listener IDs for all ELBs
+        SELECT listener_id, elb, account_partition FROM elb
+        WHERE date_partition >= '2021/12/01'
+        AND date_partition <= '2021/12/31'
+        GROUP BY listener_id, elb, account_partition
+        ORDER BY listener_id ASC
+  ResourceDemoQueryELB5:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ELB_BY_DEST_ELB"
+      Description: "Get count of client IPs for specific elb"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count of client IPs for specific elb 
+        SELECT client_ip, count(*) as record_count FROM elb
+        WHERE date_partition >= '2021/12/01'
+        AND date_partition <= '2021/12/31'
+        AND elb LIKE '%test-elb%'
+        GROUP BY client_ip
+        ORDER BY record_count DESC
+  ResourceDemoQueryELB6:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ELB_BY_CLIENT_IP"
+      Description: "Get count of requests from specific client IPs"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count of requests from specific client IPs
+        SELECT elb, account_partition, count(*) as record_count FROM elb
+        WHERE date_partition >= '2021/12/01'
+        AND date_partition <= '2021/12/31'
+        AND client_ip LIKE '69.110.128.117%'
+        GROUP BY elb, account_partition
+        ORDER BY record_count DESC
+  ResourceDemoQueryELB7:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ELB_SOURCE_DEST"
+      Description: "Get list of source IP and destination ELB in specifc AWS account ordered by the number of records"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get list of source IP and destination ELB in specifc AWS account ordered by the number of records 
+        SELECT elb, client_ip, count(*) as record_count FROM elb
+        WHERE date_partition >= '2021/12/01'
+        AND date_partition <= '2021/12/31'
+        AND account_partition = '111122223333'
+        GROUP BY elb, client_ip
+        ORDER BY record_count DESC
+  ResourceDemoQueryELB8:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ELB_TLS_PROTOCOL_VERSION"
+      Description: "Get tls protocol versions used on ELBs"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get tls protocol versions used on ELBs
+        SELECT tls_protocol_version, elb, account_partition FROM elb
+        WHERE date_partition >= '2021/12/01'
+        AND date_partition <= '2021/12/31'
+        GROUP BY tls_protocol_version, elb, account_partition
+        ORDER BY tls_protocol_version ASC
+  ResourceDemoQueryELB9:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ELB_TLS_CIPHER_SUITE"
+      Description: "Get tls cipher suite used on ELBs"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get tls cipher suite used on ELBs
+        SELECT tls_cipher_suite, elb, account_partition FROM elb
+        WHERE date_partition >= '2021/12/01'
+        AND date_partition <= '2021/12/31'
+        GROUP BY tls_cipher_suite, elb, account_partition
+        ORDER BY tls_cipher_suite ASC
+  ResourceDemoQueryELB10:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ELB_CERT"
+      Description: "Get certificates IDs used on elbs"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get certificates ARNs used on elbs
+        SELECT cert_arn, elb, account_partition FROM elb
+        WHERE date_partition >= '2021/12/01'
+        AND date_partition <= '2021/12/31'
+        GROUP BY cert_arn, elb, account_partition
+        ORDER BY cert_arn ASC
+  ResourceDemoQueryELB11:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ELB_DOMAIN_NAMES"
+      Description: "Get list of domain names for ELBs"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get list of domain names for ELBs
+        SELECT domain_name, elb, account_partition FROM elb
+        WHERE date_partition >= '2021/12/01'
+        AND date_partition <= '2021/12/31'
+        GROUP BY domain_name, elb, account_partition
+        ORDER BY domain_name DESC
+  ResourceDemoQueryELB12:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ELB_REQUEST_BY_DOMAIN_NAME"
+      Description: "Get count of all requests by domain name"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get count of all requests by domain name
+        SELECT domain_name, elb, account_partition, count(*) as record_count FROM elb
+        WHERE date_partition >= '2021/12/01'
+        AND date_partition <= '2021/12/31'
+        GROUP BY domain_name, elb, account_partition
+        ORDER BY record_count DESC
+  ResourceDemoQueryELB13:
+    Type: AWS::Athena::NamedQuery
+    Properties: 
+      Name: "DEMO_ELB_REQUESTS_BY_ELB_AND_CLIENT_IP"
+      Description: "Get requests info from specific client IPs to specific ELB"
+      Database: !Ref ParamDatabaseName
+      WorkGroup: !Ref ResourceAthenaWorkgroupDefault
+      QueryString: | 
+        -- Get requests info from specific client IPs to specific ELB
+        SELECT      type,
+                    version,
+                    time,
+                    elb,
+                    listener_id,
+                    client_ip,
+                    client_port,
+                    target_ip,
+                    target_port,
+                    tcp_connection_time_ms,
+                    tls_handshake_time_ms,
+                    received_bytes,
+                    sent_bytes,
+                    incoming_tls_alert,
+                    cert_arn string,
+                    certificate_serial,
+                    tls_cipher_suite,
+                    tls_protocol_version,
+                    tls_named_group,
+                    domain_name,
+                    alpn_fe_protocol,
+                    alpn_be_protocol,
+                    alpn_client_preference_list
+        FROM elb
+        WHERE date_partition >= '2021/12/01'
+        AND date_partition <= '2021/12/31'
+        AND client_ip LIKE '69.110.128.117%'
+        AND elb LIKE '%test-elb%'
