@@ -188,7 +188,7 @@ ORDER BY vpcflow.event_date ASC, vpcflow.sourceaddress ASC, vpcflow.destinationa
 -- NOTE: this is an example of using the new IPADDRESS data type, as string a string comparison would correctly compare IP addresses
 SELECT *
 FROM vpcflow
-WHERE (sourceaddress <> '-' AND destinationaddress <> '-')
+WHERE logstatus = 'OK' -- required to filter out '-' in the src/dst IP fields
 AND (    (
          NOT ( (CAST(sourceaddress AS IPADDRESS) > IPADDRESS '10.0.0.0'
          AND CAST(sourceaddress AS IPADDRESS) < IPADDRESS '10.255.255.255')
@@ -221,6 +221,37 @@ AND (    (
          AND CAST(sourceaddress AS IPADDRESS) < IPADDRESS '192.168.255.255'))
          )
      )
+AND date_partition >= '2020/07/01'
+AND date_partition <= '2020/07/31'
+AND account_partition = '111122223333'
+AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+
+-- *******************************************************************************************
+--       Queries Enabled by Amazon Athena v3 
+--
+-- NOTE: Queries in the section below require Athena Engine version 3 or later to be enabled.
+--       If you're used the latest version of AWS Security Analytics Bootstrap, 
+--       these queries are already supported.  If you need to update your environment to 
+--       use the latest Amazon Athena engine version, review these instructions:
+--       https://docs.aws.amazon.com/athena/latest/ug/engine-versions-changing.html
+-- *******************************************************************************************
+
+-- Search for all internal-to-internal VPC Flow records for the internal VPC Subnets in the private 172.16.0.0/12 address space
+SELECT * FROM vpcflow
+WHERE logstatus = 'OK' -- required to filter out '-' in the src/dst IP fields
+AND contains('172.16.0.0/12', cast(sourceaddress as IPADDRESS)) 
+AND contains('172.16.0.0/12', cast(destinationaddress as IPADDRESS))
+AND date_partition >= '2020/07/01'
+AND date_partition <= '2020/07/31'
+AND account_partition = '111122223333'
+AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+
+-- Search for all VPC Flow records _except_ the internal-to-internal records for VPC Subnets in the private 172.16.0.0/12 address space
+-- e.g. only return VPC Flow records between internal and external IP addresses
+SELECT * FROM vpcflow
+WHERE logstatus = 'OK' -- required to filter out '-' in the src/dst IP fields
+AND NOT (contains('172.16.0.0/12', cast(sourceaddress as IPADDRESS)) 
+AND contains('172.16.0.0/12', cast(destinationaddress as IPADDRESS)))
 AND date_partition >= '2020/07/01'
 AND date_partition <= '2020/07/31'
 AND account_partition = '111122223333'
