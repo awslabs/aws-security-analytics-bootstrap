@@ -250,8 +250,10 @@ AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 -- e.g. only return VPC Flow records between internal and external IP addresses
 SELECT * FROM vpcflow
 WHERE logstatus = 'OK' -- required to filter out '-' in the src/dst IP fields
-AND NOT (contains('172.16.0.0/12', cast(sourceaddress as IPADDRESS)) 
-AND contains('172.16.0.0/12', cast(destinationaddress as IPADDRESS)))
+AND NOT (
+    contains('172.16.0.0/12', cast(sourceaddress as IPADDRESS)) 
+    AND contains('172.16.0.0/12', cast(destinationaddress as IPADDRESS))
+)
 AND date_partition >= '2020/07/01'
 AND date_partition <= '2020/07/31'
 AND account_partition = '111122223333'
