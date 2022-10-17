@@ -105,6 +105,7 @@ By installing AWS Security Analytics Bootstrap, AWS customers may incur charges 
 AWS Security Analytics Bootstrap stands on the shoulders of countless giants and has benefited from the assistance of *MANY* collaborators and contributors.  Thanks to everyone who has helped or inspired the project so far and thanks in advance to any future contributions.
 
 Many thanks for your contributions:
+- Aaron Lennon
 - Bohan Li
 - Brian Andrzejewski
 - Brian Poole

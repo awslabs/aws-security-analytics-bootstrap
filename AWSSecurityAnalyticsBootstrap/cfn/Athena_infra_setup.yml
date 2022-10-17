@@ -180,7 +180,7 @@ Resources:
         # This affects you only if you run queries in this workgroup. If you do, workgroup settings are used
         EnforceWorkGroupConfiguration: TRUE
         EngineVersion: 
-            SelectedEngineVersion: 'Athena engine version 2'
+            SelectedEngineVersion: 'Athena engine version 3'
         PublishCloudWatchMetricsEnabled: FALSE
         RequesterPaysEnabled: FALSE 
         ResultConfiguration: 
