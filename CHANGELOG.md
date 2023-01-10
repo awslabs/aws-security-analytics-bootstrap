@@ -1,5 +1,8 @@
 # Changelog - AWS Security Analytics Bootstrap
 
+## [1.1.1] - 2022-01-10
+- Coverted demo queries into Amazon Security Lake OSCF formatted queries
+
 ## [1.1.0] - 2022-10-17
 - Updated to use Amazon Athena engine to v3 (latest) [link](https://docs.aws.amazon.com/athena/latest/ug/engine-versions-reference-0003.html)
 - Added new demo VPC Flow log queries for Athena engine v3
