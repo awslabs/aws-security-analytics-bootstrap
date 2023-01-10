@@ -2,7 +2,7 @@
 
 This directory contains sample security analytics queries for the new [Amazon Security Lake](https://w.amazon.com/bin/view/SecurityLake/) service.  Amazon Security Lake is a new automated security data lake service that allows customers to aggregate, manage, and derive value from their security related log and event data. Amazon Security Lake automates the central management of security data, normalizing it into the open-source security schema [OCSF](https://github.com/ocsf).  OCSF was [co-initiated by AWS and developed in collaboration with other industry leaders](https://aws.amazon.com/blogs/security/aws-co-announces-release-of-the-open-cybersecurity-schema-framework-ocsf-project/) to enable security use cases such as incident response and security data analytics.
 
-These queries were originally developed for the AWS Customer Incident Response Team for the [AWS Security Analytics Bootstrap](https://github.com/awslabs/aws-security-analytics-bootstrap/blob/main/LICENSE) project and have converted into the normalized OSCF log format used by Amazon Security Lake.
+These queries were originally developed for the AWS Customer Incident Response Team for the [AWS Security Analytics Bootstrap](https://github.com/awslabs/aws-security-analytics-bootstrap/blob/main/LICENSE) project and were converted into the normalized OSCF log format used by Amazon Security Lake.
 
 ## Amazon Security Lake Demo Queries
 
