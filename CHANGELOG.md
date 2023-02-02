@@ -1,5 +1,8 @@
 # Changelog - AWS Security Analytics Bootstrap
 
+## [1.1.2] - 2022-02-02
+- Added Amazon Security Lake OSCF formatted queries for Security Hub (contributed by Charles Roberts)
+
 ## [1.1.1] - 2022-01-10
 - Coverted demo queries into Amazon Security Lake OSCF formatted queries
 
