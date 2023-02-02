@@ -110,6 +110,7 @@ Many thanks for your contributions:
 - Brian Andrzejewski
 - Brian Poole
 - Casey Reniker
+- Ross Warren
 - Clayton Darnell
 - Cydney Stude
 - Freddy Kasprzykowski
@@ -125,6 +126,7 @@ Many thanks for your contributions:
 - Pathik Shah
 - Ravi Sankar Prasad Kadiri
 - Richard Billington
+- Ross Warren
 - Srinivas Ananda Babu
 - Theo Tolv
 
