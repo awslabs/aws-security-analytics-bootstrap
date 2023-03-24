@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/awslabs/aws-security-analytics-bootstrap/tree/main/AWSSecurityAnalyticsBootstrap/amazon_security_lake_queries,186,88
+/awslabs/aws-security-analytics-bootstrap,167,119
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/amazon_security_lake_queries/ocsf/amazon_security_lake_queries_all.md,62,42
+/awslabs/aws-security-analytics-bootstrap/tree/main/AWSSecurityAnalyticsBootstrap,41,25
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/amazon_security_lake_queries/ocsf/amazon_security_lake_queries_cloudtrail.md,40,24
+/awslabs/aws-security-analytics-bootstrap/tree/main/AWSSecurityAnalyticsBootstrap/amazon_security_lake_queries/ocsf,37,21
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/amazon_security_lake_queries/ocsf/amazon_security_lake_queries_route53.md,26,13
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/sql/dml/analytics/cloudtrail/cloudtrail_demo_queries.sql,25,21
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/docs/img/architecture/SingleAccount.png,23,17
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/amazon_security_lake_queries/ocsf/amazon_security_lake_queries_vpcflow.md,19,11
