@@ -178,6 +178,32 @@ AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 GROUP BY identity.user.uuid, identity.user.uid, identity.user.name
 ```
 
+**Query:** Search for activity by a specific IAM User
+> NOTE: this query is similar to the one above, but will search for just a certain access key that's associated with an IAM User
+```
+SELECT time, eventhour, identity.user.uuid, identity.user.name, identity.user.credential_uid, api.operation, unmapped['requestParameters.userName'] as requestParametersUsername, unmapped['requestParameters.policyArn'] as requestParametersPolicyArn, api.response
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+WHERE identity.user.type = 'IAMUser'
+AND identity.user.name = '{username}'
+AND eventhour >= '2022110100'
+AND eventhour <= '2022110700'
+AND accountid = '111122223333'
+AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2');
+```
+
+**Query:** Search for activity associated with a specific IAM User's Access Key
+> NOTE: this query is similar to the one above, but will search for just a certain access key that's associated with an IAM User
+```
+SELECT time, eventhour, identity.user.uuid, identity.user.name, identity.user.credential_uid, api.operation, unmapped['requestParameters.userName'] as requestParametersUsername, unmapped['requestParameters.policyArn'] as requestParametersPolicyArn, api.response
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+WHERE identity.user.type = 'IAMUser'
+AND identity.user.credential_uid = '{accesskeyid}'
+AND eventhour >= '2022110100'
+AND eventhour <= '2022110700'
+AND accountid = '111122223333'
+AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2');
+```
+
 **Query:** IAM change summary: Filter read-only GET/LIST/DESCRIBE and Filter unsuccessful calls
 
 ```
