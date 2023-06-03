@@ -13,7 +13,7 @@ SPDX-License-Identifier: Apache-2.0
 
 ```SQL
 SELECT * 
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings" 
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0" 
 LIMIT 10; 
 ```
 
@@ -25,27 +25,27 @@ LIMIT 10;
 
 **Query:** Preview first 10 rows with all fields, limited to a single account
 ```SQL
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE accountid = '111122223333'
 LIMIT 10;
 ```
 **Query:** Preview first 10 rows with all fields, limited to multiple accounts
 ```SQL
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE accountid in ('111122223333','444455556666','123456789012')
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to a single region
 ```SQL
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE region = 'us-east-1'
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to multiple regions
 ```SQL
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE region in ('us-east-1','us-east-2','us-west-2')
 LIMIT 10;
 ```
@@ -53,7 +53,7 @@ LIMIT 10;
 **Query:** preview first 10 rows with all fields, limited to a certain date range
 > NOTE: eventday format is 'YYYYMMDD' as a string
 ```SQL
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 LIMIT 10;
@@ -61,8 +61,8 @@ LIMIT 10;
 
 **Query:** Preview first 10 rows with all fields, limited to the past 30 days (relative)
 ```SQL
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
-WHERE eventday >= date_format(date_add('day',-30,current_timestamp), '%Y%m%d')
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
+WHERE eventhour >= date_format(date_add('day',-30,current_timestamp), '%Y%m%d')
 LIMIT 10;
 ```
 
@@ -70,7 +70,7 @@ LIMIT 10;
 > NOTE: narrowing the scope of the query as much as possible will improve performance and minimize cost
 
 ```SQL
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
@@ -86,7 +86,7 @@ The OSCF uses Unix times. You can convert these to a DTG which matches the Secur
 **Query** Convert the `finding.modified_time` column from Unix time to DTG and change the column name to `UpdatedAt`
 ```SQL
 SELECT FROM_UNIXTIME(CAST(time AS DOUBLE)/1000.0) AS "Time"
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE cloud.account_uid = '981843992624'
 LIMIT 10;
 ```
@@ -97,7 +97,7 @@ The data returned from Security Lake for a Security Hub Security Standard findin
 **Query** Use `split_part()` to get the Control Id
 ```SQL
 SELECT split_part(finding.title,' ',1) AS "ProductFields.ControlId",
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE cloud.account_uid = '981843992624'
 LIMIT 10;
 ```
@@ -148,7 +148,7 @@ SELECT
     region "Region",
     accountid "AccountId",
     eventday "EventDay"
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings" 
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0" 
 ```
 
 ### SELECT SECURITY FINDINGS FROM OTHER INTEGRATION PROVIDERS

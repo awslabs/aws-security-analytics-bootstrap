@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0
 **Query:** Preview first 10 rows with all fields, quick way to verify everything is setup correctly
 
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 LIMIT 10; 
 ```
 
@@ -23,28 +23,28 @@ LIMIT 10;
 
 **Query:** Preview first 10 rows with all fields, limited to a single account
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE accountid = '111122223333'
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to multiple accounts
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE accountid in ('111122223333','444455556666','123456789012')
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to a single region
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE region = 'us-east-1'
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to multiple regions
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE region in ('us-east-1','us-east-2','us-west-2')
 LIMIT 10;
 ```
@@ -52,7 +52,7 @@ LIMIT 10;
 **Query:** preview first 10 rows with all fields, limited to a certain date range
 > NOTE: eventday format is 'YYYYMMDD' as a string
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 LIMIT 10;
@@ -60,7 +60,7 @@ LIMIT 10;
 
 **Query:** Preview first 10 rows with all fields, limited to the past 30 days (relative)
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE eventday >= date_format(date_add('day',-30,current_timestamp), '%Y%m%d')
 LIMIT 10;
 ```
@@ -69,7 +69,7 @@ LIMIT 10;
 > NOTE: narrowing the scope of the query as much as possible will improve performance and minimize cost
 
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
@@ -92,7 +92,7 @@ LIMIT 10;
 
 **Query:** Summary of event counts by Region (e.g. where is the most activity)
 ```
-SELECT region, count(*) as eventcount FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT region, count(*) as eventcount FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
@@ -104,7 +104,7 @@ ORDER BY eventcount DESC
 **Query:** Summary of event count by Region and EventName, ordered by event count (descending) for each region.  This is a quick way to identify top cloudtrail eventnames seen in each region
 
 ```
-SELECT region, api.operation, count(*) as operation_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT region, api.operation, count(*) as operation_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
@@ -115,7 +115,7 @@ ORDER BY region, operation_count DESC
 
 **Query:** User login summary, via AssumeRole or ConsoleLogin includes a list of all source IPs for each user
 ```
-SELECT  identity.user.uuid, api.operation, array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT  identity.user.uuid, api.operation, array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE identity.user.uuid IS NOT NULL
 AND (api.operation = 'AssumeRole' OR api.operation = 'ConsoleLogin')
 AND eventday >= '20230530'
@@ -131,7 +131,7 @@ ORDER BY api.operation
 > NOTE: This query is simlar to the quere above, except it uses the normalized OCSF activityid for login activity (1) rather than explitly searching for login operation names.
 
 ```
-SELECT  identity.user.uuid, api.operation, array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT  identity.user.uuid, api.operation, array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE activity_id = 1
 AND eventday >= '20230530'
 AND eventday <= '20230631'
@@ -147,7 +147,7 @@ ORDER BY api.operation
 ```
 SELECT identity.user.uuid, array_agg(DISTINCT(api.operation)) AS operations,
 	array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips,
-	array_agg(DISTINCT(http_request.user_agent) ORDER BY http_request.user_agent) AS user_agents FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+	array_agg(DISTINCT(http_request.user_agent) ORDER BY http_request.user_agent) AS user_agents FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE api.operation <> 'AssumeRole'
 AND api.operation NOT LIKE 'Get%'
 AND api.operation NOT LIKE 'List%'
@@ -166,7 +166,7 @@ GROUP BY identity.user.uuid
 SELECT identity.user.uuid, identity.user.name,
 	array_agg(DISTINCT(api.operation) ORDER BY api.operation) AS operations,
 	array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips,
-	array_agg(DISTINCT(http_request.user_agent) ORDER BY http_request.user_agent) AS user_agents FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+	array_agg(DISTINCT(http_request.user_agent) ORDER BY http_request.user_agent) AS user_agents FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE api.operation <> 'AssumeRole'
 AND api.operation NOT LIKE 'Get%'
 AND api.operation NOT LIKE 'List%'
@@ -182,7 +182,7 @@ GROUP BY identity.user.uuid, identity.user.uid, identity.user.name
 > NOTE: this query is similar to the one above, but will search for just a certain access key that's associated with an IAM User
 ```
 SELECT time, eventday, identity.user.uuid, identity.user.name, identity.user.credential_uid, api.operation, unmapped['requestParameters.userName'] as requestParametersUsername, unmapped['requestParameters.policyArn'] as requestParametersPolicyArn, api.response
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE identity.user.type = 'IAMUser'
 AND identity.user.name = '{username}'
 AND eventday >= '20230530'
@@ -195,7 +195,7 @@ AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2');
 > NOTE: this query is similar to the one above, but will search for just a certain access key that's associated with an IAM User
 ```
 SELECT time, eventday, identity.user.uuid, identity.user.name, identity.user.credential_uid, api.operation, unmapped['requestParameters.userName'] as requestParametersUsername, unmapped['requestParameters.policyArn'] as requestParametersPolicyArn, api.response
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE identity.user.type = 'IAMUser'
 AND identity.user.credential_uid = '{accesskeyid}'
 AND eventday >= '20230530'
@@ -208,7 +208,7 @@ AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2');
 
 ```
 SELECT time, identity.user.uuid, identity.user.name, api.operation, unmapped['requestParameters'] AS request_parameters
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE api.service.name = 'iam.amazonaws.com'
 AND api.operation NOT LIKE 'Get%'
 AND api.operation NOT LIKE 'List%'
@@ -227,7 +227,7 @@ ORDER BY accountid, time
 SELECT time, identity.user.uuid, identity.user.name, api.operation,
 	JSON_EXTRACT_SCALAR(JSON_EXTRACT(unmapped['responseElements'], '$.accessKey'), '$.userName') AS user_name,
 	JSON_EXTRACT_SCALAR(JSON_EXTRACT(unmapped['responseElements'], '$.accessKey'), '$.accessKeyId') AS access_key
-	FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+	FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE api.operation = 'CreateAccessKey'
 AND api.response.error IS NULL
 AND eventday >= '20230530'
@@ -242,7 +242,7 @@ ORDER BY accountid, time
 ```
 SELECT time, identity.user.uuid, identity.user.name, api.operation,
 	JSON_EXTRACT_SCALAR(unmapped['requestParameters'] , '$.userName') AS "username with password modified"
-	FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+	FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE api.operation IN ('UpdateLoginProfile', 'CreateLoginProfile')
 AND api.response.error IS NULL
 AND eventday >= '20230530'
@@ -258,7 +258,7 @@ ORDER BY accountid, time
 
 ```
 SELECT *
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE NOT contains('10.0.0.0/8', CAST(src_endpoint.ip AS IPADDRESS))
 AND NOT contains('172.16.0.0/12', CAST(src_endpoint.ip AS IPADDRESS))
 AND NOT contains('192.168.0.0/16', CAST(src_endpoint.ip AS IPADDRESS))

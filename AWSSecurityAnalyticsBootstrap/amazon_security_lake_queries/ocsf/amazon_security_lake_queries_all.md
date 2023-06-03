@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0
 **Query:** Preview first 10 rows with all fields, quick way to verify everything is setup correctly
 
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 LIMIT 10; 
 ```
 
@@ -23,28 +23,28 @@ LIMIT 10;
 
 **Query:** Preview first 10 rows with all fields, limited to a single account
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE accountid = '111122223333'
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to multiple accounts
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE accountid in ('111122223333','444455556666','123456789012')
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to a single region
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE region = 'us-east-1'
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to multiple regions
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE region in ('us-east-1','us-east-2','us-west-2')
 LIMIT 10;
 ```
@@ -52,7 +52,7 @@ LIMIT 10;
 **Query:** preview first 10 rows with all fields, limited to a certain date range
 > NOTE: eventday format is 'YYYYMMDD' as a string
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 LIMIT 10;
@@ -60,7 +60,7 @@ LIMIT 10;
 
 **Query:** Preview first 10 rows with all fields, limited to the past 30 days (relative)
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE eventday >= date_format(date_add('day',-30,current_timestamp), '%Y%m%d')
 LIMIT 10;
 ```
@@ -69,7 +69,7 @@ LIMIT 10;
 > NOTE: narrowing the scope of the query as much as possible will improve performance and minimize cost
 
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
@@ -92,7 +92,7 @@ LIMIT 10;
 
 **Query:** Summary of event counts by Region (e.g. where is the most activity)
 ```
-SELECT region, count(*) as eventcount FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT region, count(*) as eventcount FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
@@ -104,7 +104,7 @@ ORDER BY eventcount DESC
 **Query:** Summary of event count by Region and EventName, ordered by event count (descending) for each region.  This is a quick way to identify top cloudtrail eventnames seen in each region
 
 ```
-SELECT region, api.operation, count(*) as operation_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT region, api.operation, count(*) as operation_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
@@ -115,7 +115,7 @@ ORDER BY region, operation_count DESC
 
 **Query:** User login summary, via AssumeRole or ConsoleLogin includes a list of all source IPs for each user
 ```
-SELECT  identity.user.uuid, api.operation, array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT  identity.user.uuid, api.operation, array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE identity.user.uuid IS NOT NULL
 AND (api.operation = 'AssumeRole' OR api.operation = 'ConsoleLogin')
 AND eventday >= '20230530'
@@ -131,7 +131,7 @@ ORDER BY api.operation
 > NOTE: This query is simlar to the quere above, except it uses the normalized OCSF activityid for login activity (1) rather than explitly searching for login operation names.
 
 ```
-SELECT  identity.user.uuid, api.operation, array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+SELECT  identity.user.uuid, api.operation, array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE activity_id = 1
 AND eventday >= '20230530'
 AND eventday <= '20230631'
@@ -147,7 +147,7 @@ ORDER BY api.operation
 ```
 SELECT identity.user.uuid, array_agg(DISTINCT(api.operation)) AS operations,
 	array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips,
-	array_agg(DISTINCT(http_request.user_agent) ORDER BY http_request.user_agent) AS user_agents FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+	array_agg(DISTINCT(http_request.user_agent) ORDER BY http_request.user_agent) AS user_agents FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE api.operation <> 'AssumeRole'
 AND api.operation NOT LIKE 'Get%'
 AND api.operation NOT LIKE 'List%'
@@ -166,7 +166,7 @@ GROUP BY identity.user.uuid
 SELECT identity.user.uuid, identity.user.name,
 	array_agg(DISTINCT(api.operation) ORDER BY api.operation) AS operations,
 	array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips,
-	array_agg(DISTINCT(http_request.user_agent) ORDER BY http_request.user_agent) AS user_agents FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+	array_agg(DISTINCT(http_request.user_agent) ORDER BY http_request.user_agent) AS user_agents FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE api.operation <> 'AssumeRole'
 AND api.operation NOT LIKE 'Get%'
 AND api.operation NOT LIKE 'List%'
@@ -182,7 +182,7 @@ GROUP BY identity.user.uuid, identity.user.uid, identity.user.name
 > NOTE: this query is similar to the one above, but will search for just a certain access key that's associated with an IAM User
 ```
 SELECT time, eventday, identity.user.uuid, identity.user.name, identity.user.credential_uid, api.operation, unmapped['requestParameters.userName'] as requestParametersUsername, unmapped['requestParameters.policyArn'] as requestParametersPolicyArn, api.response
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE identity.user.type = 'IAMUser'
 AND identity.user.name = '{username}'
 AND eventday >= '20230530'
@@ -195,7 +195,7 @@ AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2');
 > NOTE: this query is similar to the one above, but will search for just a certain access key that's associated with an IAM User
 ```
 SELECT time, eventday, identity.user.uuid, identity.user.name, identity.user.credential_uid, api.operation, unmapped['requestParameters.userName'] as requestParametersUsername, unmapped['requestParameters.policyArn'] as requestParametersPolicyArn, api.response
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE identity.user.type = 'IAMUser'
 AND identity.user.credential_uid = '{accesskeyid}'
 AND eventday >= '20230530'
@@ -208,7 +208,7 @@ AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2');
 
 ```
 SELECT time, identity.user.uuid, identity.user.name, api.operation, unmapped['requestParameters'] AS request_parameters
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE api.service.name = 'iam.amazonaws.com'
 AND api.operation NOT LIKE 'Get%'
 AND api.operation NOT LIKE 'List%'
@@ -227,7 +227,7 @@ ORDER BY accountid, time
 SELECT time, identity.user.uuid, identity.user.name, api.operation,
 	JSON_EXTRACT_SCALAR(JSON_EXTRACT(unmapped['responseElements'], '$.accessKey'), '$.userName') AS user_name,
 	JSON_EXTRACT_SCALAR(JSON_EXTRACT(unmapped['responseElements'], '$.accessKey'), '$.accessKeyId') AS access_key
-	FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+	FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE api.operation = 'CreateAccessKey'
 AND api.response.error IS NULL
 AND eventday >= '20230530'
@@ -242,7 +242,7 @@ ORDER BY accountid, time
 ```
 SELECT time, identity.user.uuid, identity.user.name, api.operation,
 	JSON_EXTRACT_SCALAR(unmapped['requestParameters'] , '$.userName') AS "username with password modified"
-	FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+	FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE api.operation IN ('UpdateLoginProfile', 'CreateLoginProfile')
 AND api.response.error IS NULL
 AND eventday >= '20230530'
@@ -258,7 +258,7 @@ ORDER BY accountid, time
 
 ```
 SELECT *
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE NOT contains('10.0.0.0/8', CAST(src_endpoint.ip AS IPADDRESS))
 AND NOT contains('172.16.0.0/12', CAST(src_endpoint.ip AS IPADDRESS))
 AND NOT contains('192.168.0.0/16', CAST(src_endpoint.ip AS IPADDRESS))
@@ -275,7 +275,7 @@ AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 **Query:** Preview first 10 rows with all fields, quick way to verify everything is setup correctly
 
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 LIMIT 10;
 ```
 
@@ -287,28 +287,28 @@ LIMIT 10;
 **Query:** Preview first 10 rows with all fields, limited to a single account
 
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE accountid = '111122223333'
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to multiple accounts
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE accountid in ('111122223333','444455556666','123456789012')
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to a single region
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE region = 'us-east-1'
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to multiple regions
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE region in ('us-east-1','us-east-2','us-west-2')
 LIMIT 10;
 ```
@@ -316,14 +316,14 @@ LIMIT 10;
 **Query:** Preview first 10 rows with all fields, limited to a certain date range
 > NOTE: eventday format is 'YYYYMMDD' as a string
 
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 LIMIT 10;
 
 **Query:** Preview first 10 rows with all fields, limited to the past 30 days (relative)
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE eventday >= date_format(date_add('day',-30,current_timestamp), '%Y%m%d')
 LIMIT 10;
 ```
@@ -332,7 +332,7 @@ LIMIT 10;
 
 > NOTE: narrowing the scope of the query as much as possible will improve performance and minimize cost
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '2022111700'
 AND accountid = '111122223333'
@@ -353,7 +353,7 @@ LIMIT 10;
 
 **Query:** Get list source/destination IP pairs ordered by the number of records 
 ```
-SELECT region, src_endpoint.ip as src_ip, dst_endpoint.ip as dst_ip, count(*) as record_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+SELECT region, src_endpoint.ip as src_ip, dst_endpoint.ip as dst_ip, count(*) as record_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
@@ -365,7 +365,7 @@ ORDER BY record_count DESC
 **Query:** Get a summary of records between a given source/destination IP pair, ordered by the total number of bytes
 
 ```
-SELECT region, src_endpoint.ip as src_ip, dst_endpoint.ip as dst_ip, sum(traffic.bytes) as byte_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+SELECT region, src_endpoint.ip as src_ip, dst_endpoint.ip as dst_ip, sum(traffic.bytes) as byte_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE (src_endpoint.ip = '192.0.2.1' OR dst_endpoint.ip = '192.0.2.1')
 AND (src_endpoint.ip = '203.0.113.2' OR dst_endpoint.ip = '203.0.113.2')
 AND eventday >= '20230530'
@@ -380,7 +380,7 @@ ORDER BY byte_count DESC
 > NOTE: for remote IPs this represents the amount data downloaded from port 443 by the instance, for instance IPs this represents the amount data downloaded by remost hosts from the instance on port 443
 
 ```
-SELECT region, dst_endpoint.instance_uid as dst_instance_id, src_endpoint.ip as src_ip, src_endpoint.port as src_port, dst_endpoint.ip as dst_ip, sum(traffic.bytes) as byte_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+SELECT region, dst_endpoint.instance_uid as dst_instance_id, src_endpoint.ip as src_ip, src_endpoint.port as src_port, dst_endpoint.ip as dst_ip, sum(traffic.bytes) as byte_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE dst_endpoint.instance_uid = 'i-000000000000000'
 AND src_endpoint.port = 443
 AND eventday >= '20230530'
@@ -394,7 +394,7 @@ ORDER BY byte_count DESC
 **Query:** Get a summary with the number of bytes for each src_ip,src_port,dst_ip,dst_port quad across all records to or from a specific IP
 
 ```
-SELECT src_endpoint.ip as src_ip, dst_endpoint.ip as dst_ip, src_endpoint.port as src_port, dst_endpoint.port as dst_port, sum(traffic.bytes) as byte_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+SELECT src_endpoint.ip as src_ip, dst_endpoint.ip as dst_ip, src_endpoint.port as src_port, dst_endpoint.port as dst_port, sum(traffic.bytes) as byte_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE (src_endpoint.ip = '192.0.2.1' OR dst_endpoint.ip = '192.0.2.1')
 AND eventday >= '20230530'
 AND eventday <= '20230631'
@@ -416,7 +416,7 @@ traffic.packets,
 traffic.bytes,
 connection_info.direction,
 activity_name
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE (src_endpoint.ip = '192.0.2.1'
 AND dst_endpoint.ip = '192.0.2.254')
 OR (src_endpoint.ip = '192.0.2.254'
@@ -432,7 +432,7 @@ SELECT src_endpoint.ip,
          array_agg(DISTINCT(dst_endpoint.ip)),
          array_agg(DISTINCT(dst_endpoint.instance_uid)),
          array_agg(DISTINCT(dst_endpoint.port))
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE dst_endpoint.port < 32768 -- skip ephemeral ports, since we're looking for inbound connections to service ports
 AND eventday >= '20230530'
 AND eventday <= '20230631'
@@ -447,8 +447,8 @@ ORDER by first_seen ASC
 
 ```
 SELECT vpcflow.eventday, vpcflow.src_endpoint.ip as src_endpoint_ip, vpcflow.dst_endpoint.ip as dst_endpoint_ip, sum(vpcflow.traffic.bytes) as byte_count
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow" as vpcflow
-INNER JOIN (SELECT src_endpoint.ip as src_endpoint_ip, sum(traffic.bytes) as byte_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow" 
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0" as vpcflow
+INNER JOIN (SELECT src_endpoint.ip as src_endpoint_ip, sum(traffic.bytes) as byte_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0" 
 WHERE src_endpoint.ip <> '-'
 AND contains('192.0.2.0/24', cast(src_endpoint.ip as IPADDRESS))
 AND eventday >= '20230530'
@@ -472,7 +472,7 @@ ORDER BY vpcflow.eventday ASC, vpcflow.src_endpoint.ip ASC, vpcflow.dst_endpoint
 
 ```
 SELECT *
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE src_endpoint.ip <> '-'
 	AND dst_endpoint.ip <> '-'
 	AND (
@@ -548,7 +548,7 @@ WHERE src_endpoint.ip <> '-'
 > NOTE: this is an example of the new IPADDRESS data type added in Athena engine v2 and IP Address contains function added in the Athena engine v3.  Be sure that you've [enabled Athena engine v3](https://aws.amazon.com/blogs/big-data/upgrade-to-athena-engine-version-3-to-increase-query-performance-and-access-more-analytics-features/)
 
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE src_endpoint.ip <> '-'
 AND dst_endpoint.ip <> '-'
 AND contains('172.16.0.0/12', cast(src_endpoint.ip as IPADDRESS)) 
@@ -562,7 +562,7 @@ AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 **Query:**  Search for all VPC Flow records _except_ the internal-to-internal records for VPC Subnets in the private 172.16.0.0/12 address space.  Useful to filter out internal VPC traffic and only show traffic to or from external IP Addresses.
 
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE src_endpoint.ip <> '-'
 AND dst_endpoint.ip <> '-'
 AND NOT (
@@ -581,7 +581,7 @@ AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 
 **Query:** Preview first 10 rows with all fields, quick way to verify everything is setup correctly
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53_1_0"
 LIMIT 10;
 ```
 
@@ -593,14 +593,14 @@ LIMIT 10;
 
 **Query:** Preview first 10 rows with all fields, limited to a single account
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53_1_0"
 WHERE accountid = '111122223333'
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to multiple accounts
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53_1_0"
 WHERE accountid in ('111122223333','444455556666','123456789012')
 LIMIT 10;
 ```
@@ -608,14 +608,14 @@ LIMIT 10;
 
 **Query:** Preview first 10 rows with all fields, limited to a single region
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53_1_0"
 WHERE region = 'us-east-1'
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to multiple regions
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53_1_0"
 WHERE region in ('us-east-1','us-east-2','us-west-2')
 LIMIT 10;
 ```
@@ -623,7 +623,7 @@ LIMIT 10;
 **Query:** preview first 10 rows with all fields, limited to a certain date range
 > NOTE: eventday format is 'YYYYMMDD' as a string
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 LIMIT 10;
@@ -631,7 +631,7 @@ LIMIT 10;
 
 **Query:** Preview first 10 rows with all fields, limited to the past 30 days (relative)
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53_1_0"
 WHERE eventday >= date_format(date_add('day',-30,current_timestamp), '%Y%m%d')
 LIMIT 10;
 ```
@@ -640,7 +640,7 @@ LIMIT 10;
 > NOTE: narrowing the scope of the query as much as possible will improve performance and minimize cost
 
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
@@ -654,7 +654,7 @@ LIMIT 10;
 
 ```
 SELECT  query.hostname, query.type, cardinality(array_distinct(filter(array_agg(src_endpoint), q -> q.instance_uid IS NOT NULL))) as instance_count, array_distinct(filter(array_agg(src_endpoint), q -> q.instance_uid IS NOT NULL)) as instances
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
@@ -666,7 +666,7 @@ ORDER by instance_count DESC;
 **Query:** Sort queries by the number of queries for each each hostname
 
 ```
-SELECT  query.hostname, query.type, count(*) as query_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
+SELECT  query.hostname, query.type, count(*) as query_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
@@ -677,7 +677,7 @@ ORDER BY query_count DESC;
 
 **Query:** Summary with count of each time an A record type of a hostname was queried
 ```
-SELECT  query.hostname, query.type, count(*) as query_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
+SELECT  query.hostname, query.type, count(*) as query_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53_1_0"
 WHERE query.type = 'A'
 AND eventday >= '20230530'
 AND eventday <= '20230631'
@@ -694,7 +694,7 @@ SELECT element_at(split(query.hostname,'.'),-2) AS tld,
         element_at(split(query.hostname,'.'),-3) AS sld, 
         query.hostname, query.type, 
         count(*) AS query_count
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53_1_0"
 WHERE query.type = 'A'
 AND eventday >= '20230530'
 AND eventday <= '20230631'
@@ -707,7 +707,7 @@ ORDER BY  query_count DESC;
 **Query:** Get records that that resolve to a specific IP (e.g., 203.0.113.2)
 
 ```
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53_1_0"
 WHERE contains(transform(answers, x-> x.rdata), '203.0.113.2')
 AND eventday >= '20230530'
 AND eventday <= '20230631'
@@ -723,7 +723,7 @@ AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2');
 
 ```SQL
 SELECT * 
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings" 
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0" 
 LIMIT 10; 
 ```
 
@@ -735,27 +735,27 @@ LIMIT 10;
 
 **Query:** Preview first 10 rows with all fields, limited to a single account
 ```SQL
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE accountid = '111122223333'
 LIMIT 10;
 ```
 **Query:** Preview first 10 rows with all fields, limited to multiple accounts
 ```SQL
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE accountid in ('111122223333','444455556666','123456789012')
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to a single region
 ```SQL
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE region = 'us-east-1'
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to multiple regions
 ```SQL
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE region in ('us-east-1','us-east-2','us-west-2')
 LIMIT 10;
 ```
@@ -763,7 +763,7 @@ LIMIT 10;
 **Query:** preview first 10 rows with all fields, limited to a certain date range
 > NOTE: eventday format is 'YYYYMMDD' as a string
 ```SQL
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 LIMIT 10;
@@ -771,7 +771,7 @@ LIMIT 10;
 
 **Query:** Preview first 10 rows with all fields, limited to the past 30 days (relative)
 ```SQL
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE eventday >= date_format(date_add('day',-30,current_timestamp), '%Y%m%d')
 LIMIT 10;
 ```
@@ -780,7 +780,7 @@ LIMIT 10;
 > NOTE: narrowing the scope of the query as much as possible will improve performance and minimize cost
 
 ```SQL
-SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
@@ -796,7 +796,7 @@ The OSCF uses Unix times. You can convert these to a DTG which matches the Secur
 **Query** Convert the `finding.modified_time` column from Unix time to DTG and change the column name to `UpdatedAt`
 ```SQL
 SELECT FROM_UNIXTIME(CAST(time AS DOUBLE)/1000.0) AS "Time"
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE cloud.account_uid = '981843992624'
 LIMIT 10;
 ```
@@ -807,7 +807,7 @@ The data returned from Security Lake for a Security Hub Security Standard findin
 **Query** Use `split_part()` to get the Control Id
 ```SQL
 SELECT split_part(finding.title,' ',1) AS "ProductFields.ControlId",
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE cloud.account_uid = '981843992624'
 LIMIT 10;
 ```
@@ -858,7 +858,7 @@ SELECT
     region "Region",
     accountid "AccountId",
     eventday "EventDay"
-FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings" 
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0" 
 ```
 
 ### SELECT SECURITY FINDINGS FROM OTHER INTEGRATION PROVIDERS
