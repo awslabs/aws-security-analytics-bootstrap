@@ -17,9 +17,9 @@ LIMIT 10;
 ```
 
 ### VPCFLOW PARTITION TESTS 
-> **NOTE:** if there are no partition constraints (accountid, region, or eventhour) then by default ALL data will be scanned this could lead to costly query, always consider using at least one partition constraint.
+> **NOTE:** if there are no partition constraints (accountid, region, or eventday) then by default ALL data will be scanned this could lead to costly query, always consider using at least one partition constraint.
 > 
-> Note that this is the case even if you have other constraints in a query (e.g. sourceipaddress = '192.0.2.1'), only constraints using partition fields (eventhour, region, accountid) will limit the amount of data scanned.
+> Note that this is the case even if you have other constraints in a query (e.g. sourceipaddress = '192.0.2.1'), only constraints using partition fields (eventday, region, accountid) will limit the amount of data scanned.
 
 **Query:** Preview first 10 rows with all fields, limited to a single account
 
@@ -51,17 +51,17 @@ LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to a certain date range
-> NOTE: eventhour format is 'YYYYMMDDHH' as a string
+> NOTE: eventday format is 'YYYYMMDD' as a string
 
 SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
-WHERE eventhour >= '2022110100'
-AND eventhour <= '2022111700'
+WHERE eventday >= '20230530'
+AND eventday <= '20230631''
 LIMIT 10;
 
 **Query:** Preview first 10 rows with all fields, limited to the past 30 days (relative)
 ```
 SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
-WHERE eventhour >= date_format(date_add('day',-30,current_timestamp), '%Y%m%d%H')
+WHERE eventday >= date_format(date_add('day',-30,current_timestamp), '%Y%m%d')
 LIMIT 10;
 ```
 
@@ -70,8 +70,8 @@ LIMIT 10;
 > NOTE: narrowing the scope of the query as much as possible will improve performance and minimize cost
 ```
 SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
-WHERE eventhour >= '2022110100'
-AND eventhour <= '2022111700'
+WHERE eventday >= '20230530'
+AND eventday <= '20230631''
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 LIMIT 10;
@@ -82,8 +82,8 @@ LIMIT 10;
 
 > DEFAULT partition constraints: 
 ```
-    WHERE eventhour >= '2022110100'
-    AND eventhour <= '2022110700'
+    WHERE eventday >= '20230530'
+    AND eventday <= '20230631'
     AND accountid = '111122223333'
     AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 ```
@@ -91,8 +91,8 @@ LIMIT 10;
 **Query:** Get list source/destination IP pairs ordered by the number of records 
 ```
 SELECT region, src_endpoint.ip as src_ip, dst_endpoint.ip as dst_ip, count(*) as record_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
-WHERE eventhour >= '2022110100'
-AND eventhour <= '2022111700'
+WHERE eventday >= '20230530'
+AND eventday <= '20230631''
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 GROUP BY region, src_endpoint.ip, dst_endpoint.ip
@@ -105,8 +105,8 @@ ORDER BY record_count DESC
 SELECT region, src_endpoint.ip as src_ip, dst_endpoint.ip as dst_ip, sum(traffic.bytes) as byte_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
 WHERE (src_endpoint.ip = '192.0.2.1' OR dst_endpoint.ip = '192.0.2.1')
 AND (src_endpoint.ip = '203.0.113.2' OR dst_endpoint.ip = '203.0.113.2')
-AND eventhour >= '2022110100'
-AND eventhour <= '2022111700'
+AND eventday >= '20230530'
+AND eventday <= '20230631''
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 GROUP BY region, dst_endpoint.instance_uid, src_endpoint.ip, dst_endpoint.ip
@@ -120,8 +120,8 @@ ORDER BY byte_count DESC
 SELECT region, dst_endpoint.instance_uid as dst_instance_id, src_endpoint.ip as src_ip, src_endpoint.port as src_port, dst_endpoint.ip as dst_ip, sum(traffic.bytes) as byte_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
 WHERE dst_endpoint.instance_uid = 'i-000000000000000'
 AND src_endpoint.port = 443
-AND eventhour >= '2022110100'
-AND eventhour <= '2022111700'
+AND eventday >= '20230530'
+AND eventday <= '20230631''
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 GROUP BY region, dst_endpoint.instance_uid, src_endpoint.ip, src_endpoint.port, dst_endpoint.ip
@@ -133,8 +133,8 @@ ORDER BY byte_count DESC
 ```
 SELECT src_endpoint.ip as src_ip, dst_endpoint.ip as dst_ip, src_endpoint.port as src_port, dst_endpoint.port as dst_port, sum(traffic.bytes) as byte_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
 WHERE (src_endpoint.ip = '192.0.2.1' OR dst_endpoint.ip = '192.0.2.1')
-AND eventhour >= '2022110100'
-AND eventhour <= '2022111700'
+AND eventday >= '20230530'
+AND eventday <= '20230631''
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 GROUP BY src_endpoint.ip, dst_endpoint.ip, src_endpoint.port, dst_endpoint.port
@@ -171,8 +171,8 @@ SELECT src_endpoint.ip,
          array_agg(DISTINCT(dst_endpoint.port))
 FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow"
 WHERE dst_endpoint.port < 32768 -- skip ephemeral ports, since we're looking for inbound connections to service ports
-AND eventhour >= '2022110100'
-AND eventhour <= '2022111700'
+AND eventday >= '20230530'
+AND eventday <= '20230631''
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 GROUP BY src_endpoint.ip
@@ -183,25 +183,25 @@ ORDER by first_seen ASC
 **Query:** Transfer Report on Top 10 Internal IPs with large transfers, limited to source addresses in network 192.0.2.0/24
 
 ```
-SELECT vpcflow.eventhour, vpcflow.src_endpoint.ip as src_endpoint_ip, vpcflow.dst_endpoint.ip as dst_endpoint_ip, sum(vpcflow.traffic.bytes) as byte_count
+SELECT vpcflow.eventday, vpcflow.src_endpoint.ip as src_endpoint_ip, vpcflow.dst_endpoint.ip as dst_endpoint_ip, sum(vpcflow.traffic.bytes) as byte_count
 FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow" as vpcflow
 INNER JOIN (SELECT src_endpoint.ip as src_endpoint_ip, sum(traffic.bytes) as byte_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow" 
 WHERE src_endpoint.ip <> '-'
 AND contains('192.0.2.0/24', cast(src_endpoint.ip as IPADDRESS))
-AND eventhour >= '2022110100'
-AND eventhour <= '2022111700'
+AND eventday >= '20230530'
+AND eventday <= '20230631''
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 GROUP BY region, dst_endpoint.instance_uid, src_endpoint.ip, dst_endpoint.ip, dst_endpoint.port
 ORDER BY byte_count DESC
 LIMIT 10 ) as top_n 
 ON top_n.src_endpoint_ip = vpcflow.src_endpoint.ip
-WHERE eventhour >= '2022110100'
-AND eventhour <= '2022111700'
+WHERE eventday >= '20230530'
+AND eventday <= '20230631''
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
-GROUP BY vpcflow.eventhour, vpcflow.src_endpoint.ip, vpcflow.dst_endpoint.ip
-ORDER BY vpcflow.eventhour ASC, vpcflow.src_endpoint.ip ASC, vpcflow.dst_endpoint.ip ASC, byte_count DESC
+GROUP BY vpcflow.eventday, vpcflow.src_endpoint.ip, vpcflow.dst_endpoint.ip
+ORDER BY vpcflow.eventday ASC, vpcflow.src_endpoint.ip ASC, vpcflow.dst_endpoint.ip ASC, byte_count DESC
 ```
 
 **Query:** Search for traffic between a private (RFC1918) IP address and a public (non-RFC1918) IP address
@@ -274,8 +274,8 @@ WHERE src_endpoint.ip <> '-'
 			)
 		)
 	)
-	AND eventhour >= '2022110100'
-	AND eventhour <= '2022111700'
+	AND eventday >= '20230530'
+	AND eventday <= '20230631''
     AND accountid = '111122223333'
 	AND region in ('us-east-1','us-east-2','us-west-2','us-west-2')
 ```
@@ -290,8 +290,8 @@ WHERE src_endpoint.ip <> '-'
 AND dst_endpoint.ip <> '-'
 AND contains('172.16.0.0/12', cast(src_endpoint.ip as IPADDRESS)) 
 AND contains('172.16.0.0/12', cast(dst_endpoint.ip as IPADDRESS))
-AND eventhour >= '2022110100'
-AND eventhour <= '2022111700'
+AND eventday >= '20230530'
+AND eventday <= '20230631''
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 ```
@@ -306,8 +306,8 @@ AND NOT (
     contains('172.16.0.0/12', cast(src_endpoint.ip as IPADDRESS)) 
     AND contains('172.16.0.0/12', cast(dst_endpoint.ip as IPADDRESS))
 )
-AND eventhour >= '2022110100'
-AND eventhour <= '2022111700'
+AND eventday >= '20230530'
+AND eventday <= '20230631''
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 ```

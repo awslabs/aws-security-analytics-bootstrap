@@ -16,9 +16,9 @@ LIMIT 10;
 ```
 
 ### ROUTE 53 PARTITION TESTS 
-> **NOTE:** if there are no partition constraints (accountid, region, or eventhour) then by default ALL data will be scanned this could lead to costly query, always consider using at least one partition constraint.
+> **NOTE:** if there are no partition constraints (accountid, region, or eventday) then by default ALL data will be scanned this could lead to costly query, always consider using at least one partition constraint.
 > 
-> Note that this is the case even if you have other constraints in a query (e.g. sourceipaddress = '192.0.2.1'), only constraints using partition fields (eventhour, region, accountid) will limit the amount of data scanned.
+> Note that this is the case even if you have other constraints in a query (e.g. sourceipaddress = '192.0.2.1'), only constraints using partition fields (eventday, region, accountid) will limit the amount of data scanned.
 
 
 **Query:** Preview first 10 rows with all fields, limited to a single account
@@ -51,18 +51,18 @@ LIMIT 10;
 ```
 
 **Query:** preview first 10 rows with all fields, limited to a certain date range
-> NOTE: eventhour format is 'YYYYMMDDHH' as a string
+> NOTE: eventday format is 'YYYYMMDD' as a string
 ```
 SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
-WHERE eventhour >= '2022110100'
-AND eventhour <= '2022110700'
+WHERE eventday >= '20230530'
+AND eventday <= '20230631'
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to the past 30 days (relative)
 ```
 SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
-WHERE eventhour >= date_format(date_add('day',-30,current_timestamp), '%Y%m%d%H')
+WHERE eventday >= date_format(date_add('day',-30,current_timestamp), '%Y%m%d')
 LIMIT 10;
 ```
 
@@ -71,8 +71,8 @@ LIMIT 10;
 
 ```
 SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
-WHERE eventhour >= '2022110100'
-AND eventhour <= '2022110700'
+WHERE eventday >= '20230530'
+AND eventday <= '20230631'
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 LIMIT 10;
@@ -85,8 +85,8 @@ LIMIT 10;
 ```
 SELECT  query.hostname, query.type, cardinality(array_distinct(filter(array_agg(src_endpoint), q -> q.instance_uid IS NOT NULL))) as instance_count, array_distinct(filter(array_agg(src_endpoint), q -> q.instance_uid IS NOT NULL)) as instances
 FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
-WHERE eventhour >= '2022110100'
-AND eventhour <= '2022111700'
+WHERE eventday >= '20230530'
+AND eventday <= '20230631'
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 GROUP BY query.hostname, query.type
@@ -97,8 +97,8 @@ ORDER by instance_count DESC;
 
 ```
 SELECT  query.hostname, query.type, count(*) as query_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
-WHERE eventhour >= '2022110100'
-AND eventhour <= '2022111700'
+WHERE eventday >= '20230530'
+AND eventday <= '20230631'
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 GROUP BY query.hostname, query.type
@@ -109,8 +109,8 @@ ORDER BY query_count DESC;
 ```
 SELECT  query.hostname, query.type, count(*) as query_count FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
 WHERE query.type = 'A'
-AND eventhour >= '2022110100'
-AND eventhour <= '2022111700'
+AND eventday >= '20230530'
+AND eventday <= '20230631'
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 GROUP BY query.hostname, query.type
@@ -126,8 +126,8 @@ SELECT element_at(split(query.hostname,'.'),-2) AS tld,
         count(*) AS query_count
 FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
 WHERE query.type = 'A'
-AND eventhour >= '2022110100'
-AND eventhour <= '2022111700'
+AND eventday >= '20230530'
+AND eventday <= '20230631'
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 GROUP BY  query.hostname, query.type
@@ -139,8 +139,8 @@ ORDER BY  query_count DESC;
 ```
 SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_route53"
 WHERE contains(transform(answers, x-> x.rdata), '203.0.113.2')
-AND eventhour >= '2022110100'
-AND eventhour <= '2022111700'
+AND eventday >= '20230530'
+AND eventday <= '20230631'
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2');
 ```

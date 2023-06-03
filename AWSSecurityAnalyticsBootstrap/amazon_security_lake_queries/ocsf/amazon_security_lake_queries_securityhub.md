@@ -19,9 +19,9 @@ LIMIT 10;
 
 ### SECURITY HUB PARTITION TESTS 
 
-> **NOTE:** if there are no partition constraints (accountid, region, or eventhour) then by default ALL data will be scanned this could lead to costly query, always consider using at least one partition constraint.
+> **NOTE:** if there are no partition constraints (accountid, region, or eventday) then by default ALL data will be scanned this could lead to costly query, always consider using at least one partition constraint.
 > 
-> Note that this is the case even if you have other constraints in a query (e.g. productname = 'Macice'), only constraints using partition fields (eventhour, region, accountid) will limit the amount of data scanned.
+> Note that this is the case even if you have other constraints in a query (e.g. productname = 'Macice'), only constraints using partition fields (eventday, region, accountid) will limit the amount of data scanned.
 
 **Query:** Preview first 10 rows with all fields, limited to a single account
 ```SQL
@@ -51,18 +51,18 @@ LIMIT 10;
 ```
 
 **Query:** preview first 10 rows with all fields, limited to a certain date range
-> NOTE: eventhour format is 'YYYYMMDDHH' as a string
+> NOTE: eventday format is 'YYYYMMDD' as a string
 ```SQL
 SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
-WHERE eventhour >= '2022110100'
-AND eventhour <= '2022110700'
+WHERE eventday >= '20230530'
+AND eventday <= '20230631'
 LIMIT 10;
 ```
 
 **Query:** Preview first 10 rows with all fields, limited to the past 30 days (relative)
 ```SQL
 SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
-WHERE eventhour >= date_format(date_add('day',-30,current_timestamp), '%Y%m%d%H')
+WHERE eventday >= date_format(date_add('day',-30,current_timestamp), '%Y%m%d')
 LIMIT 10;
 ```
 
@@ -71,8 +71,8 @@ LIMIT 10;
 
 ```SQL
 SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings"
-WHERE eventhour >= '2022110100'
-AND eventhour <= '2022110700'
+WHERE eventday >= '20230530'
+AND eventday <= '20230631'
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 LIMIT 10;
@@ -147,7 +147,7 @@ SELECT
     unmapped['FindingProviderFields'] "FindingProviderFields",
     region "Region",
     accountid "AccountId",
-    eventhour "EventHour"
+    eventday "EventDay"
 FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings" 
 ```
 
