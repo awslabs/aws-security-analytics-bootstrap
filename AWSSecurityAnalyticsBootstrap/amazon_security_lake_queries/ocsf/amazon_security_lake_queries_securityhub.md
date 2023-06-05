@@ -62,7 +62,7 @@ LIMIT 10;
 **Query:** Preview first 10 rows with all fields, limited to the past 30 days (relative)
 ```SQL
 SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
-WHERE eventhour >= date_format(date_add('day',-30,current_timestamp), '%Y%m%d')
+WHERE eventday >= date_format(date_add('day',-30,current_timestamp), '%Y%m%d')
 LIMIT 10;
 ```
 
