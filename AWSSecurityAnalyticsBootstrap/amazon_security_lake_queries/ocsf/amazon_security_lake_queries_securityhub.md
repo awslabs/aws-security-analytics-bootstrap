@@ -159,8 +159,8 @@ Security Hub has integrations with lots of other AWS security services such as G
 ```SQL
 SELECT *
 FROM "sh_findings_view"
-    WHERE "ProductName" = 'Macie'
-    AND "AWSAccountId" = '111122223333'
+    WHERE lower(ProductName) = 'macie'
+    AND AWSAccountId = '111122223333'
 LIMIT 10;
 ```
 **Query** Select findings from Amazon Macie and AWS Config and only return 10 results
@@ -168,8 +168,8 @@ LIMIT 10;
 ```SQL
 SELECT *
 FROM "sh_findings_view"
-    WHERE "ProductName" in ('Macie', 'Config')
-    AND "AWSAccountId" = '111122223333'
+    WHERE lower(ProductName) in ('macie', 'config')
+    AND AWSAccountId = '111122223333'
 LIMIT 10;
 ```
 
