@@ -96,7 +96,7 @@ The data returned from Security Lake for a Security Hub Security Standard findin
 
 **Query** Use `split_part()` to get the Control Id
 ```SQL
-SELECT split_part(finding.title,' ',1) AS "ProductFields.ControlId",
+SELECT split_part(finding.title,' ',1) AS "ProductFields.ControlId"
 FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
 WHERE cloud.account_uid = '111122223333'
 LIMIT 10;
