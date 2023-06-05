@@ -172,20 +172,21 @@ FROM "sh_findings_view"
     AND "AWSAccountId" = '111122223333'
 LIMIT 10;
 ```
+
 ***Query** Select `Config` findings from the `sh_findings_view` view 
 ```SQL
-SELECT *
+SELECT *, 
+CASE
+    WHEN lower(Severity) = 'high' THEN 1
+    WHEN lower(Severity) = 'medium' THEN 2
+    WHEN lower(Severity) = 'low' THEN 3
+    ELSE 4
+END as display_order
 FROM "sh_findings_view"
-WHERE "ProductName" = 'Config'
-AND "AWSAccountId" = '111122223333'
-AND WorkFlowStatus = 'NEW'
-AND severity in ('HIGH', 'MEDIUM', 'LOW')
-ORDER BY 
-    CASE
-        WHEN "severity" = 'HIGH' THEN 1
-        WHEN "severity" = 'MEDIUM' THEN 2
-        WHEN "severity" = 'LOW' THEN 3
-        ELSE 4
-    END
+WHERE lower(ProductName) = 'config'
+AND AWSAccountId = '111122223333'
+AND lower(WorkFlowStatus) = 'new'
+AND lower(Severity) in ('high', 'medium', 'low')
+ORDER BY display_order
 LIMIT 10;
 ```
