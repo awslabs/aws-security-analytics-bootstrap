@@ -87,7 +87,7 @@ The OSCF uses Unix times. You can convert these to a DTG which matches the Secur
 ```SQL
 SELECT FROM_UNIXTIME(CAST(time AS DOUBLE)/1000.0) AS "Time"
 FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
-WHERE cloud.account_uid = '981843992624'
+WHERE cloud.account_uid = '111122223333'
 LIMIT 10;
 ```
 
@@ -98,7 +98,7 @@ The data returned from Security Lake for a Security Hub Security Standard findin
 ```SQL
 SELECT split_part(finding.title,' ',1) AS "ProductFields.ControlId",
 FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
-WHERE cloud.account_uid = '981843992624'
+WHERE cloud.account_uid = '111122223333'
 LIMIT 10;
 ```
 
