@@ -7,8 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 
 ## Cloudtrail Management Events
 
-> **NOTE:** The example queries in this section are intended to query Cloudtrail management events.  CloudTrail management events, S3 data events, and Lambda data events are three separate sources in Security Lake.  For more information about enabling Cloudtrail sources in Amazon Security Lake please review the official [documentation](https://docs.aws.amazon.com/security-lake/latest/userguide/internal-sources.html).
-
 ### PREVIEW CLOUDTRAIL MANAGEMENT EVENTS TABLE
 
 **Query:** Preview first 10 rows with all fields, quick way to verify everything is setup correctly
@@ -272,8 +270,6 @@ AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 ```
 
 ## Cloudtrail Lambda Data Events
-
- **NOTE:** The example queries in this file are intended to query *Cloudtrail Lambda data events*.  CloudTrail management events, S3 data events, and Lambda data events are three separate sources in Security Lake.  For more information about enabling Cloudtrail sources in Amazon Security Lake please review the official [documentation](https://docs.aws.amazon.com/security-lake/latest/userguide/internal-sources.html).
 
 ### CLOUDTRAIL LAMBDA DATA EVENTS PARTITION TESTS
 
