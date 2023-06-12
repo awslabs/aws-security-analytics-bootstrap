@@ -9,17 +9,23 @@ These queries were originally developed for the AWS Customer Incident Response T
  AWS Service Log | Demo Query Link
 ------|------|
 All Queries Combined | [all demo queries](./ocsf/amazon_security_lake_queries_all.md)
-[AWS CloudTrail](https://docs.aws.amazon.com/cloudtrail/index.html) | [cloudtrail demo queries](./ocsf/amazon_security_lake_queries_cloudtrail.md)
+[AWS CloudTrail Management Events](https://docs.aws.amazon.com/cloudtrail/index.html) | [cloudtrail management events demo queries](./ocsf/amazon_security_lake_queries_cloudtrail_management.md)
+[AWS CloudTrail Lambda Data Events](https://docs.aws.amazon.com/cloudtrail/index.html) | [cloudtrail lambda data events demo queries](./ocsf/amazon_security_lake_queries_cloudtrail_lambda.md)
 [Amazon Virtual Private Cloud (VPC) Flow Logs](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html) | [vpc flow demo queries](./ocsf/amazon_security_lake_queries_vpcflow.md)
 [Amazon Route 53 DNS resolver query logs](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver-query-logs.html) | [route 53 dns demo queries](./ocsf/amazon_security_lake_queries_route53.md)
+[Security Hub Events](TODO) | [security hub event demo queries](./ocsf/amazon_security_lake_queries_security_hub.md)
 
 ## Acknowledgment
 
 Many thanks to support from:
 - AWS Customer Incident Response Team
 - Amazon Security Lake Product Team
+- Anna McAbee
+- Charles Roberts
+- Marc Luescher
 - Ross Warren
 - Josh Pavel
+
 
 ## License
 
