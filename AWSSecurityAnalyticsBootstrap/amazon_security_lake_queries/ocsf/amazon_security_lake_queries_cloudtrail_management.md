@@ -3,11 +3,13 @@ Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0 
 -->
 
-# Amazon Security Lake Demo Queries
+# Amazon Security Lake Example Queries
 
-## Cloudtrail
+## Cloudtrail Management Events
 
-### PREVIEW CLOUDTRAIL TABLE
+> **NOTE:** The example queries in this file are intended to query Cloudtrail management events.  CloudTrail management events, S3 data events, and Lambda data events are three separate sources in Security Lake.  For more information about enabling Cloudtrail sources in Amazon Security Lake please review the official [documentation](https://docs.aws.amazon.com/security-lake/latest/userguide/internal-sources.html).
+
+### PREVIEW CLOUDTRAIL MANAGEMENT EVENTS TABLE
 
 **Query:** Preview first 10 rows with all fields, quick way to verify everything is setup correctly
 
@@ -16,7 +18,7 @@ SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_tab
 LIMIT 10; 
 ```
 
-### CLOUDTRAIL PARTITION TESTS 
+### CLOUDTRAIL MANAGEMENT PARTITION TESTS 
 > **NOTE:** if there are no partition constraints (accountid, region, or eventday) then by default ALL data will be scanned this could lead to costly query, always consider using at least one partition constraint.
 > 
 > Note that this is the case even if you have other constraints in a query (e.g. sourceipaddress = '192.0.2.1'), only constraints using partition fields (eventday, region, accountid) will limit the amount of data scanned.
@@ -77,7 +79,7 @@ AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 LIMIT 10;
 ```
 
-### CLOUDTRAIL ANALYSIS EXAMPLES
+### CLOUDTRAIL MANAGEMENT ANALYSIS EXAMPLES
 > NOTE: default partition constraints have been provided for each query, be sure to add the appropriate partition constraints to the WHERE clause as shown in the section above
 
 > DEFAULT partition constraints: 
