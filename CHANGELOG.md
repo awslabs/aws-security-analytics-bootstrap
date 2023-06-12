@@ -1,5 +1,14 @@
 # Changelog - AWS Security Analytics Bootstrap
 
+## [1.1.3] - 2023-06-12
+- Added two new example IAM queries for Amazon Security Lake OCSF formatted Cloudtrail
+- Updated all Amazon Security Lake example queries to the GA schema and OSCF formats (resolves issue #13)
+- Split Amazon Security Lake example queries for Cloudtrail by event type (e.g. management, lambda, s3)
+- Added Amazon Security Lake example queries for Cloudtrail Lambda data events
+- Minor: moved preview-formatted example queries to a new branch AmazonSecurityLake_Preview for reference
+- Minor: updated start and end time to be the same for all Amazon Security Lake OCSF examples queries (resolves issue #11)
+- Minor: added Security Hub Amazon Security Lake queries to all query list
+
 ## [1.1.2] - 2022-02-02
 - Added Amazon Security Lake OSCF formatted queries for Security Hub (contributed by Charles Roberts)
 

@@ -106,6 +106,7 @@ AWS Security Analytics Bootstrap stands on the shoulders of countless giants and
 
 Many thanks for your contributions:
 - Aaron Lennon
+- Anna McAbee
 - Bohan Li
 - Brian Andrzejewski
 - Brian Poole
@@ -120,6 +121,7 @@ Many thanks for your contributions:
 - Justin Fry
 - Kyle Dickinson
 - Luis Maldonado
+- Marc Luescher
 - Matt Gurr
 - Matt Helgen
 - Matthew Harvey
