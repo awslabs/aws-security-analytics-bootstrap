@@ -347,6 +347,8 @@ AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 LIMIT 10;
 ```
 
+### CLOUDTRAIL LAMBDA DATA EVENT ANALYSIS EXAMPLES
+
 **Query:** Query all Cloudtrail Lambda data events for a specific Lambda function named 'MyLambdaFunction'
 ```
 SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_lambda_execution_1_0"  
