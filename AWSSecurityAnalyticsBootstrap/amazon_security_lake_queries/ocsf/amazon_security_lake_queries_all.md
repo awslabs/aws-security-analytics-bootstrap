@@ -1,13 +1,15 @@
-<!-- 
+<!--
 Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-SPDX-License-Identifier: Apache-2.0 
+SPDX-License-Identifier: Apache-2.0
 -->
 
 # Amazon Security Lake Example Queries
 
-## Cloudtrail
+## Cloudtrail Management Events
 
-### PREVIEW CLOUDTRAIL TABLE
+> **NOTE:** The example queries in this section are intended to query Cloudtrail management events.  CloudTrail management events, S3 data events, and Lambda data events are three separate sources in Security Lake.  For more information about enabling Cloudtrail sources in Amazon Security Lake please review the official [documentation](https://docs.aws.amazon.com/security-lake/latest/userguide/internal-sources.html).
+
+### PREVIEW CLOUDTRAIL MANAGEMENT EVENTS TABLE
 
 **Query:** Preview first 10 rows with all fields, quick way to verify everything is setup correctly
 
@@ -16,7 +18,7 @@ SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_tab
 LIMIT 10; 
 ```
 
-### CLOUDTRAIL PARTITION TESTS 
+### CLOUDTRAIL MANAGEMENT PARTITION TESTS 
 > **NOTE:** if there are no partition constraints (accountid, region, or eventday) then by default ALL data will be scanned this could lead to costly query, always consider using at least one partition constraint.
 > 
 > Note that this is the case even if you have other constraints in a query (e.g. sourceipaddress = '192.0.2.1'), only constraints using partition fields (eventday, region, accountid) will limit the amount of data scanned.
@@ -77,7 +79,7 @@ AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 LIMIT 10;
 ```
 
-### CLOUDTRAIL ANALYSIS EXAMPLES
+### CLOUDTRAIL MANAGEMENT ANALYSIS EXAMPLES
 > NOTE: default partition constraints have been provided for each query, be sure to add the appropriate partition constraints to the WHERE clause as shown in the section above
 
 > DEFAULT partition constraints: 
@@ -115,14 +117,14 @@ ORDER BY region, operation_count DESC
 
 **Query:** User login summary, via AssumeRole or ConsoleLogin includes a list of all source IPs for each user
 ```
-SELECT  identity.user.uuid, api.operation, array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
-WHERE identity.user.uuid IS NOT NULL
+SELECT  actor.user.uuid, api.operation, array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
+WHERE actor.user.uuid IS NOT NULL
 AND (api.operation = 'AssumeRole' OR api.operation = 'ConsoleLogin')
 AND eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
-GROUP BY identity.user.uuid, api.operation
+GROUP BY actor.user.uuid, api.operation
 ORDER BY api.operation
 ```
 
@@ -131,21 +133,21 @@ ORDER BY api.operation
 > NOTE: This query is simlar to the quere above, except it uses the normalized OCSF activityid for login activity (1) rather than explitly searching for login operation names.
 
 ```
-SELECT  identity.user.uuid, api.operation, array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
-WHERE activity_id = 1
+SELECT  actor.user.uuid, api.operation, array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
+WHERE actor.user.uuid IS NOT NULL
+AND activity_id = 1
 AND eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
-GROUP BY identity.user.uuid, api.operation
+GROUP BY actor.user.uuid, api.operation
 ORDER BY api.operation
 ```
-
 
 **Query:** User Activity Summary: filter high volume read-only GET/LIST/DECRIBE calls
 
 ```
-SELECT identity.user.uuid, array_agg(DISTINCT(api.operation)) AS operations,
+SELECT actor.user.uuid, array_agg(DISTINCT(api.operation)) AS operations,
 	array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips,
 	array_agg(DISTINCT(http_request.user_agent) ORDER BY http_request.user_agent) AS user_agents FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE api.operation <> 'AssumeRole'
@@ -156,14 +158,14 @@ AND eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
-GROUP BY identity.user.uuid
+GROUP BY actor.user.uuid
 ```
 
 **Query:** User Activity Summary, including username: filter high volume read-only GET/LIST/DECRIBE calls
 > NOTE: this query is similar to the one above, but will include the ARN or the username (for IAM Users) of the principal 
 
 ```
-SELECT identity.user.uuid, identity.user.name,
+SELECT actor.user.uuid, actor.user.name,
 	array_agg(DISTINCT(api.operation) ORDER BY api.operation) AS operations,
 	array_agg(DISTINCT(src_endpoint.ip) ORDER BY src_endpoint.ip) AS sourceips,
 	array_agg(DISTINCT(http_request.user_agent) ORDER BY http_request.user_agent) AS user_agents FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
@@ -175,16 +177,16 @@ AND eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
-GROUP BY identity.user.uuid, identity.user.uid, identity.user.name
+GROUP BY actor.user.uuid, actor.user.uid, actor.user.name
 ```
 
 **Query:** Search for activity by a specific IAM User
 > NOTE: this query is similar to the one above, but will search for just a certain access key that's associated with an IAM User
 ```
-SELECT time, eventday, identity.user.uuid, identity.user.name, identity.user.credential_uid, api.operation, unmapped['requestParameters.userName'] as requestParametersUsername, unmapped['requestParameters.policyArn'] as requestParametersPolicyArn, api.response
+SELECT time, eventday, actor.user.uuid, actor.user.name, actor.user.credential_uid, api.operation, unmapped['requestParameters.userName'] as requestParametersUsername, unmapped['requestParameters.policyArn'] as requestParametersPolicyArn, api.response
 FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
-WHERE identity.user.type = 'IAMUser'
-AND identity.user.name = '{username}'
+WHERE actor.user.type = 'IAMUser'
+AND actor.user.name = '{username}'
 AND eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
@@ -194,10 +196,10 @@ AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2');
 **Query:** Search for activity associated with a specific IAM User's Access Key
 > NOTE: this query is similar to the one above, but will search for just a certain access key that's associated with an IAM User
 ```
-SELECT time, eventday, identity.user.uuid, identity.user.name, identity.user.credential_uid, api.operation, unmapped['requestParameters.userName'] as requestParametersUsername, unmapped['requestParameters.policyArn'] as requestParametersPolicyArn, api.response
+SELECT time, eventday, actor.user.uuid, actor.user.name, actor.user.credential_uid, api.operation, unmapped['requestParameters.userName'] as requestParametersUsername, unmapped['requestParameters.policyArn'] as requestParametersPolicyArn, api.response
 FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
-WHERE identity.user.type = 'IAMUser'
-AND identity.user.credential_uid = '{accesskeyid}'
+WHERE actor.user.type = 'IAMUser'
+AND actor.user.credential_uid = '{accesskeyid}'
 AND eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
@@ -207,7 +209,7 @@ AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2');
 **Query:** IAM change summary: Filter read-only GET/LIST/DESCRIBE and Filter unsuccessful calls
 
 ```
-SELECT time, identity.user.uuid, identity.user.name, api.operation, unmapped['requestParameters'] AS request_parameters
+SELECT time, actor.user.uuid, actor.user.name, api.operation, unmapped['requestParameters'] AS request_parameters
 FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE api.service.name = 'iam.amazonaws.com'
 AND api.operation NOT LIKE 'Get%'
@@ -224,9 +226,9 @@ ORDER BY accountid, time
 **Query:** Access Key creations with extract of username and keyid. Filter unsuccessful calls
 
 ```
-SELECT time, identity.user.uuid, identity.user.name, api.operation,
-	JSON_EXTRACT_SCALAR(JSON_EXTRACT(unmapped['responseElements'], '$.accessKey'), '$.userName') AS user_name,
-	JSON_EXTRACT_SCALAR(JSON_EXTRACT(unmapped['responseElements'], '$.accessKey'), '$.accessKeyId') AS access_key
+SELECT time, actor.user.uuid, actor.user.name, api.operation,
+	unmapped['responseElements.accessKey.userName'] AS user_name,
+	unmapped['responseElements.accessKey.accessKeyId'] AS access_key
 	FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE api.operation = 'CreateAccessKey'
 AND api.response.error IS NULL
@@ -240,8 +242,8 @@ ORDER BY accountid, time
 **Query:** Password changes with extract of username. Filter unsuccessful calls
 
 ```
-SELECT time, identity.user.uuid, identity.user.name, api.operation,
-	JSON_EXTRACT_SCALAR(unmapped['requestParameters'] , '$.userName') AS "username with password modified"
+SELECT time, actor.user.uuid, actor.user.name, api.operation,
+	user.name AS "username with password modified"
 	FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
 WHERE api.operation IN ('UpdateLoginProfile', 'CreateLoginProfile')
 AND api.response.error IS NULL
@@ -259,13 +261,104 @@ ORDER BY accountid, time
 ```
 SELECT *
 FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_1_0"
-WHERE NOT contains('10.0.0.0/8', CAST(src_endpoint.ip AS IPADDRESS))
+WHERE src_endpoint.ip <> ''
+AND NOT contains('10.0.0.0/8', CAST(src_endpoint.ip AS IPADDRESS))
 AND NOT contains('172.16.0.0/12', CAST(src_endpoint.ip AS IPADDRESS))
 AND NOT contains('192.168.0.0/16', CAST(src_endpoint.ip AS IPADDRESS))
 AND eventday >= '20230530'
 AND eventday <= '20230631'
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+```
+
+## Cloudtrail Lambda Data Events
+
+ **NOTE:** The example queries in this file are intended to query *Cloudtrail Lambda data events*.  CloudTrail management events, S3 data events, and Lambda data events are three separate sources in Security Lake.  For more information about enabling Cloudtrail sources in Amazon Security Lake please review the official [documentation](https://docs.aws.amazon.com/security-lake/latest/userguide/internal-sources.html).
+
+### CLOUDTRAIL LAMBDA DATA EVENTS PARTITION TESTS
+
+**Query:** Preview first 10 rows with all fields, quick way to verify everything is setup correctly
+
+```
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_lambda_execution_1_0"
+LIMIT 10;
+```
+
+### CLOUDTRAIL LAMBDA PARTITION TESTS
+
+> **NOTE:** if there are no partition constraints (accountid, region, or eventday) then by default ALL data will be scanned this could lead to costly query, always consider using at least one partition constraint.
+> 
+> Note that this is the case even if you have other constraints in a query (e.g. sourceipaddress = '192.0.2.1'), only constraints using partition fields (eventday, region, accountid) will limit the amount of data scanned.
+
+**Query:** Preview first 10 rows with all fields, limited to a single account
+
+```
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_lambda_execution_1_0"
+WHERE accountid = '111122223333'
+LIMIT 10;
+```
+**Query:** Preview first 10 rows with all fields, limited to multiple accounts
+
+```
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_lambda_execution_1_0"
+WHERE accountid in ('111122223333','444455556666','123456789012')
+LIMIT 10;
+```
+
+**Query:** Preview first 10 rows with all fields, limited to a single region
+
+```
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_lambda_execution_1_0"
+WHERE region = 'us-east-1'
+LIMIT 10;
+```
+
+**Query:** Preview first 10 rows with all fields, limited to multiple regions
+
+```
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_lambda_execution_1_0"
+WHERE region in ('us-east-1','us-east-2','us-west-2')
+LIMIT 10;
+```
+
+**Query:** preview first 10 rows with all fields, limited to a certain date range
+> **NOTE:** eventday format is 'YYYYMMDD' as a string
+
+```
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_lambda_execution_1_0"
+WHERE eventday >= '20230530'
+AND eventday <= '20230631'
+LIMIT 10;
+```
+
+**Query:** Preview first 10 rows with all fields, limited to the past 30 days (relative)
+
+```
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_lambda_execution_1_0"
+WHERE eventday >= date_format(date_add('day',-30,current_timestamp), '%Y%m%d')
+LIMIT 10;
+```
+
+**Query:** Preview first 10 rows with all fields, limited by a combination of partition constraints
+> **NOTE:** narrowing the scope of the query as much as possible will improve performance and minimize cost
+
+```
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_lambda_execution_1_0"
+WHERE eventday >= '20230530'
+AND eventday <= '20230631'
+AND accountid = '111122223333'
+AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
+LIMIT 10;
+```
+
+**Query:** Query all Cloudtrail Lambda data events for a specific Lambda function named 'MyLambdaFunction'
+```
+SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_lambda_execution_1_0"  
+WHERE any_match(transform(resources, x -> x.uid), y -> y like '%MyLambdaFunction%')
+AND eventday >= '20230530'
+AND eventday <= '20230631'
+AND accountid = '111122223333'
+AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2');
 ```
 
 ## VPC Flow
@@ -334,7 +427,7 @@ LIMIT 10;
 ```
 SELECT * FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_vpc_flow_1_0"
 WHERE eventday >= '20230530'
-AND eventday <= '2022111700'
+AND eventday <= '20230631'
 AND accountid = '111122223333'
 AND region in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 LIMIT 10;
@@ -797,7 +890,7 @@ The OSCF uses Unix times. You can convert these to a DTG which matches the Secur
 ```SQL
 SELECT FROM_UNIXTIME(CAST(time AS DOUBLE)/1000.0) AS "Time"
 FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
-WHERE cloud.account_uid = '981843992624'
+WHERE cloud.account_uid = '111122223333'
 LIMIT 10;
 ```
 
@@ -806,9 +899,9 @@ The data returned from Security Lake for a Security Hub Security Standard findin
 
 **Query** Use `split_part()` to get the Control Id
 ```SQL
-SELECT split_part(finding.title,' ',1) AS "ProductFields.ControlId",
+SELECT split_part(finding.title,' ',1) AS "ProductFields.ControlId"
 FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_sh_findings_1_0"
-WHERE cloud.account_uid = '981843992624'
+WHERE cloud.account_uid = '111122223333'
 LIMIT 10;
 ```
 
@@ -869,8 +962,8 @@ Security Hub has integrations with lots of other AWS security services such as G
 ```SQL
 SELECT *
 FROM "sh_findings_view"
-    WHERE "ProductName" = 'Macie'
-    AND "AWSAccountId" = '111122223333'
+    WHERE lower(ProductName) = 'macie'
+    AND AWSAccountId = '111122223333'
 LIMIT 10;
 ```
 **Query** Select findings from Amazon Macie and AWS Config and only return 10 results
@@ -878,24 +971,25 @@ LIMIT 10;
 ```SQL
 SELECT *
 FROM "sh_findings_view"
-    WHERE "ProductName" in ('Macie', 'Config')
-    AND "AWSAccountId" = '111122223333'
+    WHERE lower(ProductName) in ('macie', 'config')
+    AND AWSAccountId = '111122223333'
 LIMIT 10;
 ```
+
 ***Query** Select `Config` findings from the `sh_findings_view` view 
 ```SQL
-SELECT *
+SELECT *, 
+CASE
+    WHEN lower(Severity) = 'high' THEN 1
+    WHEN lower(Severity) = 'medium' THEN 2
+    WHEN lower(Severity) = 'low' THEN 3
+    ELSE 4
+END as display_order
 FROM "sh_findings_view"
-WHERE "ProductName" = 'Config'
-AND "AWSAccountId" = '111122223333'
-AND WorkFlowStatus = 'NEW'
-AND severity in ('HIGH', 'MEDIUM', 'LOW')
-ORDER BY 
-    CASE
-        WHEN "severity" = 'HIGH' THEN 1
-        WHEN "severity" = 'MEDIUM' THEN 2
-        WHEN "severity" = 'LOW' THEN 3
-        ELSE 4
-    END
+WHERE lower(ProductName) = 'config'
+AND AWSAccountId = '111122223333'
+AND lower(WorkFlowStatus) = 'new'
+AND lower(Severity) in ('high', 'medium', 'low')
+ORDER BY display_order
 LIMIT 10;
 ```
