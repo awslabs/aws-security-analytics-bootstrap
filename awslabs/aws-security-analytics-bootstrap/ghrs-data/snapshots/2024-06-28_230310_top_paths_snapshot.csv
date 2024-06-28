@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/awslabs/aws-security-analytics-bootstrap,162,93
+/awslabs/aws-security-analytics-bootstrap/tree/main/AWSSecurityAnalyticsBootstrap/amazon_security_lake_queries,128,34
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/cfn/Athena_infra_setup.yml,63,14
+/awslabs/aws-security-analytics-bootstrap/blob/main/README.md,53,5
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/amazon_security_lake_queries/ocsf/amazon_security_lake_queries_all.md,52,19
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/docs/aws_security_analytics_bootstrap_deployment_guide.md,50,6
+/awslabs/aws-security-analytics-bootstrap/issues,45,4
+/awslabs/aws-security-analytics-bootstrap/pulls,45,3
+/awslabs/aws-security-analytics-bootstrap/blob/main/CHANGELOG.md,40,2
+/awslabs/aws-security-analytics-bootstrap/blob/main/CODE_OF_CONDUCT.md,40,2
