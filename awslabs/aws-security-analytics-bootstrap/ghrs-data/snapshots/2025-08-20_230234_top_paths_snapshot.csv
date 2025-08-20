@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/awslabs/aws-security-analytics-bootstrap,187,42
+/awslabs/aws-security-analytics-bootstrap/pulls,73,11
+/awslabs/aws-security-analytics-bootstrap/forks,44,10
+/awslabs/aws-security-analytics-bootstrap/issues,38,10
+/awslabs/aws-security-analytics-bootstrap/stargazers,35,10
+/awslabs/aws-security-analytics-bootstrap/graphs/commit-activity,33,10
+/awslabs/aws-security-analytics-bootstrap/tree/main/AWSSecurityAnalyticsBootstrap/amazon_security_lake_queries,13,9
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/docs/img/architecture/SingleAccount.png,11,7
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/docs/img/architecture/MultiAccount.png,11,6
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/sql/dml/analytics/cloudtrail/cloudtrail_demo_queries.sql,8,6
