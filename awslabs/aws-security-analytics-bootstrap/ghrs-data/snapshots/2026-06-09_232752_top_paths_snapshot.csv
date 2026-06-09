@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/awslabs/aws-security-analytics-bootstrap,190,51
+/awslabs/aws-security-analytics-bootstrap/pulls,104,12
+/awslabs/aws-security-analytics-bootstrap/issues,68,12
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/sql/ddl/create_tables/create_vpcflowlog_table.sql,14,5
+/awslabs/aws-security-analytics-bootstrap/commit/f226382a3a6a2643241648dc8803606838950ec0,13,4
+/awslabs/aws-security-analytics-bootstrap/commit/f7b8795c25bd26c594277e042938e905076313da,9,4
+/awslabs/aws-security-analytics-bootstrap/commit/b5fb7dc3bc7438447f9a75e86c8fefd36c5899fb,9,3
+/awslabs/aws-security-analytics-bootstrap/tree/main/AWSSecurityAnalyticsBootstrap/amazon_security_lake_queries,8,7
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/docs/img/architecture/MultiAccount.png,8,5
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/docs/img/architecture/SingleAccount.png,7,7
