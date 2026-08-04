@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/awslabs/aws-security-analytics-bootstrap,74,37
+/awslabs/aws-security-analytics-bootstrap/pulls,46,4
+/awslabs/aws-security-analytics-bootstrap/issues,37,7
+/awslabs/aws-security-analytics-bootstrap/actions,13,1
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/docs/img/architecture/SingleAccount.png,9,7
+/awslabs/aws-security-analytics-bootstrap/actions/caches,8,1
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/cfn/Athena_infra_setup.yml,7,4
+/awslabs/aws-security-analytics-bootstrap/pull/9,7,2
+/awslabs/aws-security-analytics-bootstrap/pull/10,7,1
+/awslabs/aws-security-analytics-bootstrap/pull/15,7,1
