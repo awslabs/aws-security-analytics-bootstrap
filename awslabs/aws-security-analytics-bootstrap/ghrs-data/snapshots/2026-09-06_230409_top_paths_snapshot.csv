@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/awslabs/aws-security-analytics-bootstrap,119,44
+/awslabs/aws-security-analytics-bootstrap/pulls,39,9
+/awslabs/aws-security-analytics-bootstrap/issues,37,11
+/awslabs/aws-security-analytics-bootstrap/actions,19,4
+/awslabs/aws-security-analytics-bootstrap/activity,12,3
+/awslabs/aws-security-analytics-bootstrap/blob/main/LICENSE,10,5
+/awslabs/aws-security-analytics-bootstrap/commit/de6f8806489466b21ac1ac43f40d8672e6d2d2b7,10,4
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/sql/ddl/create_tables/create_cloudtrail_table.sql,10,3
+/awslabs/aws-security-analytics-bootstrap/tree/main/AWSSecurityAnalyticsBootstrap,9,7
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/amazon_security_lake_queries/ocsf/amazon_security_lake_queries_all.md,9,6
