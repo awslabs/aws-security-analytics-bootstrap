@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/awslabs/aws-security-analytics-bootstrap,82,52
+/awslabs/aws-security-analytics-bootstrap/actions,39,3
+/awslabs/aws-security-analytics-bootstrap/forks,21,1
+/awslabs/aws-security-analytics-bootstrap/issues,18,6
+/awslabs/aws-security-analytics-bootstrap/activity,18,3
+/awslabs/aws-security-analytics-bootstrap/pull/15,15,3
+/awslabs/aws-security-analytics-bootstrap/pulls,14,7
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/docs/img/architecture/MultiAccount.png,13,6
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/sql/dml/analytics/cloudtrail/cloudtrail_demo_queries.sql,11,5
+/awslabs/aws-security-analytics-bootstrap/blob/main/AWSSecurityAnalyticsBootstrap/sql/dml/analytics/vpcflow/vpcflow_demo_queries.sql,10,5
